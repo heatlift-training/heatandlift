@@ -1,0 +1,3010 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Heat &amp; Lift">
+<meta name="theme-color" content="#050a0f">
+<title>Heat &amp; Lift Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════
+   RESET + VARIABLES
+═══════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg:        #050a0f;
+  --bg1:       #0a1520;
+  --bg2:       #0f1e2d;
+  --border:    rgba(0,200,255,0.12);
+  --cyan:      #00c8ff;
+  --cyan2:     #00ffcc;
+  --orange:    #ff8c00;
+  --red:       #ff3b5c;
+  --green:     #00ff88;
+  --yellow:    #ffe040;
+  --white:     #e8f4ff;
+  --muted:     rgba(232,244,255,0.4);
+  --glass:     rgba(10,21,32,0.85);
+  --radius:    18px;
+  --safe-top:  env(safe-area-inset-top, 44px);
+  --safe-bot:  env(safe-area-inset-bottom, 34px);
+  --nav-h:     calc(64px + var(--safe-bot));
+  --font-disp: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+html, body {
+  height: 100%; width: 100%;
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-disp);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN LAYOUT
+═══════════════════════════════════════════════ */
+#app {
+  display: flex; flex-direction: column;
+  height: 100dvh; width: 100%;
+  position: relative;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: calc(52px + var(--safe-top));
+  padding-top: var(--safe-top);
+  display: flex; align-items: center; justify-content: space-between;
+  padding-left: 20px; padding-right: 20px;
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+#topbar .logo {
+  font-size: 18px; font-weight: 800; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #7CFC00, #b8ff60);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+#topbar .session-badge {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--cyan); border: 1px solid var(--border);
+  padding: 4px 10px; border-radius: 20px;
+  cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; gap: 6px;
+}
+#topbar .session-badge .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+#topbar .collab-count {
+  font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+}
+
+/* ── SCROLL CONTENT ── */
+#content {
+  flex: 1;
+  margin-top: calc(52px + var(--safe-top));
+  margin-bottom: var(--nav-h);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── BOTTOM NAV ── */
+#nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  padding-bottom: var(--safe-bot);
+  display: flex;
+  background: var(--glass);
+  backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  cursor: pointer; transition: all .2s; position: relative;
+  padding-top: 8px;
+}
+.nav-item svg { width: 22px; height: 22px; opacity: .45; transition: all .2s; }
+.nav-item span { font-size: 9px; letter-spacing: .5px; opacity: .45; transition: all .2s; text-transform: uppercase; }
+.nav-item.active svg, .nav-item.active span { opacity: 1; color: var(--cyan); }
+.nav-item.active svg { filter: drop-shadow(0 0 6px var(--cyan)); }
+.nav-item.active::before {
+  content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 32px; height: 2px; border-radius: 1px;
+  background: linear-gradient(90deg, var(--cyan), var(--cyan2));
+}
+
+/* ═══════════════════════════════════════════════
+   PAGES
+═══════════════════════════════════════════════ */
+.page { display: none; padding: 20px; animation: fadeIn .25s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+/* ═══════════════════════════════════════════════
+   HOME PAGE
+═══════════════════════════════════════════════ */
+.hero-title {
+  font-size: clamp(32px, 8vw, 48px); font-weight: 800;
+  line-height: 1.05; letter-spacing: -1.5px;
+  margin-bottom: 8px;
+}
+.hero-title span {
+  background: linear-gradient(135deg, #7CFC00, #b8ff60);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero-sub { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-bottom: 28px; }
+
+/* Test cards grid */
+.test-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.test-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 14px;
+  cursor: pointer; transition: all .22s;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 8px;
+  -webkit-user-select: none;
+}
+.test-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--accent-color, var(--cyan)) 0%, transparent 60%);
+  opacity: 0; transition: opacity .22s;
+}
+.test-card:active { transform: scale(.97); }
+.test-card:active::before { opacity: .08; }
+.test-card .card-icon {
+  font-size: 26px; line-height: 1;
+}
+.test-card .card-name {
+  font-size: 13px; font-weight: 700; letter-spacing: -.3px;
+  color: var(--white);
+}
+.test-card .card-tag {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .5px;
+  color: var(--accent-color, var(--cyan)); text-transform: uppercase;
+}
+.test-card .card-arrow {
+  position: absolute; top: 14px; right: 14px;
+  color: var(--muted); font-size: 14px;
+}
+.test-card[data-test="sj"]       { --accent-color: #00c8ff; }
+.test-card[data-test="cmj"]      { --accent-color: #00ffcc; }
+.test-card[data-test="abalakov"] { --accent-color: #ffe040; }
+.test-card[data-test="dropjump"] { --accent-color: #ff8c00; }
+.test-card[data-test="distance"] { --accent-color: #ff3b5c; }
+.test-card.full-width { grid-column: span 2; flex-direction: row; align-items: center; gap: 14px; }
+.test-card.full-width .card-icon { font-size: 30px; }
+
+/* Section label */
+.section-label {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label::after { content:''; flex:1; height:1px; background: var(--border); }
+
+/* Collab card */
+.collab-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px;
+  margin-bottom: 24px;
+}
+.collab-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.collab-card p { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+.collab-card .session-code {
+  font-family: var(--font-mono); font-size: 22px; font-weight: 500; letter-spacing: 4px;
+  color: var(--cyan); background: var(--bg2); border-radius: 10px;
+  padding: 12px; text-align: center; margin-bottom: 12px;
+  border: 1px dashed var(--border);
+}
+.btn-row { display: flex; gap: 8px; }
+.btn {
+  flex: 1; padding: 12px; border-radius: 12px; border: none;
+  font-family: var(--font-disp); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all .18s; text-align: center;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+  color: var(--bg);
+}
+.btn-secondary {
+  background: var(--bg2); border: 1px solid var(--border); color: var(--white);
+}
+.btn:active { transform: scale(.96); }
+.join-input {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 14px; color: var(--white);
+  font-family: var(--font-mono); font-size: 16px; letter-spacing: 3px;
+  text-transform: uppercase; outline: none; text-align: center;
+  margin-bottom: 10px; -webkit-appearance: none;
+}
+.join-input:focus { border-color: var(--cyan); }
+
+/* ═══════════════════════════════════════════════
+   CAPTURE PAGE
+═══════════════════════════════════════════════ */
+#capture-page { padding: 0; position: relative; }
+#video-container {
+  position: relative; width: 100%;
+  background: #000;
+  height: calc(100dvh - var(--safe-top) - 52px - var(--nav-h));
+  overflow: hidden;
+}
+#input-video {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; transform: scaleX(-1);
+}
+#output-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; transform: scaleX(-1);
+}
+
+/* HUD overlay */
+#hud {
+  position: absolute; inset: 0; pointer-events: none; z-index: 10;
+}
+#hud-top {
+  position: absolute; top: 0; left: 0; right: 0;
+  background: linear-gradient(to bottom, rgba(5,10,15,.9), transparent);
+  padding: 14px 18px 30px;
+}
+#hud-test-name {
+  font-size: 11px; font-family: var(--font-mono); letter-spacing: 3px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 2px;
+}
+#hud-state {
+  font-size: 18px; font-weight: 800; letter-spacing: -.3px;
+}
+#hud-bottom {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(to top, rgba(5,10,15,.95), transparent);
+  padding: 30px 18px 16px;
+}
+#hud-metrics {
+  display: flex; gap: 20px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.hud-metric { flex: 1; min-width: 70px; }
+.hud-metric .m-label { font-family: var(--font-mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.hud-metric .m-value { font-family: var(--font-mono); font-size: 22px; font-weight: 500; color: var(--cyan); line-height: 1.1; }
+.hud-metric .m-unit  { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+/* Progress bar */
+#hud-progress-bar {
+  height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 12px; overflow: hidden;
+}
+#hud-progress-fill {
+  height: 100%; border-radius: 2px; transition: width .2s;
+  background: linear-gradient(90deg, var(--cyan), var(--cyan2));
+}
+
+/* Camera controls (pointer-events: auto) */
+#cam-controls {
+  position: absolute; bottom: 16px; right: 16px;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: auto; z-index: 20;
+}
+.cam-btn {
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: var(--glass); backdrop-filter: blur(10px);
+  border: 1px solid var(--border); color: var(--white);
+  font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .18s;
+}
+.cam-btn:active { transform: scale(.9); background: rgba(0,200,255,.2); }
+
+/* Result card (shown after jump detected) */
+#result-overlay {
+  position: absolute; inset: 0; z-index: 30;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(5,10,15,.92);
+  backdrop-filter: blur(10px);
+  padding: 30px;
+}
+#result-overlay.show { display: flex; }
+#result-card {
+  width: 100%; background: var(--bg1); border-radius: 24px;
+  border: 1px solid var(--border); padding: 28px; text-align: center;
+}
+#result-card .res-test { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+#result-card .res-main { font-size: 64px; font-weight: 800; letter-spacing: -3px; line-height: 1; margin-bottom: 4px; }
+#result-card .res-unit { font-family: var(--font-mono); font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+#result-details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.res-detail { background: var(--bg2); border-radius: 12px; padding: 12px; }
+.res-detail .rd-label { font-family: var(--font-mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.res-detail .rd-value { font-family: var(--font-mono); font-size: 16px; font-weight: 500; }
+.res-action-row { display: flex; gap: 10px; }
+
+/* ═══════════════════════════════════════════════
+   HISTORY PAGE
+═══════════════════════════════════════════════ */
+.history-filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; }
+.history-filters::-webkit-scrollbar { display: none; }
+.filter-chip {
+  padding: 7px 14px; border-radius: 20px; white-space: nowrap;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .5px;
+  border: 1px solid var(--border); background: var(--bg1);
+  color: var(--muted); cursor: pointer; transition: all .18s;
+  flex-shrink: 0;
+}
+.filter-chip.active { background: var(--cyan); color: var(--bg); border-color: var(--cyan); font-weight: 700; }
+
+.history-list { display: flex; flex-direction: column; gap: 10px; }
+.history-item {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer; transition: all .18s;
+}
+.history-item:active { transform: scale(.98); }
+.history-item .hi-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.history-item .hi-info { flex: 1; min-width: 0; }
+.history-item .hi-test { font-size: 12px; font-weight: 700; letter-spacing: -.2px; }
+.history-item .hi-meta { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-item .hi-result { text-align: right; flex-shrink: 0; }
+.history-item .hi-main { font-family: var(--font-mono); font-size: 20px; font-weight: 500; }
+.history-item .hi-unit { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--muted); font-family: var(--font-mono); font-size: 12px;
+}
+.empty-state .es-icon { font-size: 40px; margin-bottom: 12px; }
+
+/* ═══════════════════════════════════════════════
+   SESSION/COLLAB PAGE
+═══════════════════════════════════════════════ */
+.collab-peers { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.peer-item {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.peer-avatar {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700;
+}
+.peer-name { font-size: 13px; font-weight: 600; }
+.peer-status { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+.peer-badge { margin-left: auto; }
+.badge { font-family: var(--font-mono); font-size: 9px; padding: 3px 8px; border-radius: 6px; }
+.badge-you { background: rgba(0,200,255,.15); color: var(--cyan); }
+.badge-active { background: rgba(0,255,136,.15); color: var(--green); }
+
+/* Live feed - recent from session */
+.live-entry {
+  background: var(--bg1); border: 1px solid rgba(0,200,255,.2);
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+  animation: slideIn .3s ease;
+}
+@keyframes slideIn { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:none} }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.live-text { font-family: var(--font-mono); font-size: 11px; color: var(--white); flex: 1; }
+.live-val { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--cyan); flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════
+   SETTINGS PAGE
+═══════════════════════════════════════════════ */
+.settings-group { margin-bottom: 24px; }
+.settings-group .sg-label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.setting-row {
+  background: var(--bg1); border: 1px solid var(--border);
+  padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+}
+.setting-row:first-of-type { border-radius: 14px 14px 0 0; }
+.setting-row:last-of-type  { border-radius: 0 0 14px 14px; }
+.setting-row:only-child    { border-radius: 14px; }
+.setting-row + .setting-row { border-top: none; }
+.sr-info { flex: 1; }
+.sr-label { font-size: 14px; font-weight: 600; }
+.sr-desc  { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* Toggle */
+.toggle { position: relative; width: 50px; height: 28px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--bg2);
+  border-radius: 14px; cursor: pointer; transition: .25s;
+  border: 1px solid var(--border);
+}
+.toggle-slider::before {
+  content: ''; position: absolute; height: 22px; width: 22px;
+  left: 2px; top: 2px; background: var(--muted); border-radius: 50%; transition: .25s;
+}
+.toggle input:checked + .toggle-slider { background: rgba(0,200,255,.2); border-color: var(--cyan); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(22px); background: var(--cyan); }
+
+/* Select */
+.sr-select {
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--white); padding: 6px 10px; border-radius: 8px;
+  font-family: var(--font-mono); font-size: 12px;
+  -webkit-appearance: none; outline: none;
+}
+
+/* ═══════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════ */
+#modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(5,10,15,.8); backdrop-filter: blur(10px);
+  display: none; align-items: flex-end;
+}
+#modal-overlay.show { display: flex; }
+#modal-sheet {
+  width: 100%; background: var(--bg1);
+  border-radius: 24px 24px 0 0; padding: 20px;
+  padding-bottom: calc(20px + var(--safe-bot));
+  animation: slideUp .3s cubic-bezier(.32,0,.67,0);
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:none} }
+.modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+#toast {
+  position: fixed; top: calc(var(--safe-top) + 60px); left: 50%; transform: translateX(-50%);
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 20px; padding: 10px 18px;
+  font-family: var(--font-mono); font-size: 12px; color: var(--white);
+  z-index: 300; white-space: nowrap;
+  opacity: 0; transition: opacity .2s; pointer-events: none;
+}
+#toast.show { opacity: 1; }
+
+/* ═══════════════════════════════════════════════
+   LOADING / MP INIT
+═══════════════════════════════════════════════ */
+#mp-loader {
+  position: fixed; inset: 0; z-index: 400;
+  background: #000; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 20px;
+}
+#mp-loader .ml-logo-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  animation: logoIn .6s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes logoIn {
+  from { opacity:0; transform: translateY(18px) scale(.94); }
+  to   { opacity:1; transform: none; }
+}
+#mp-loader .ml-status { font-family: var(--font-mono); font-size: 12px; color: rgba(180,255,100,.55); letter-spacing: 1px; }
+.spinner {
+  width: 36px; height: 36px; border: 2px solid var(--border);
+  border-top-color: var(--cyan); border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Calibration overlay */
+#calib-overlay {
+  position: absolute; inset: 0; z-index: 25;
+  background: rgba(5,10,15,.7); display: none;
+  flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  padding: 30px; pointer-events: auto;
+}
+#calib-overlay.show { display: flex; }
+#calib-canvas { border-radius: 12px; max-width: 100%; touch-action: none; cursor: crosshair; }
+#calib-inst { font-family: var(--font-mono); font-size: 12px; color: var(--cyan); text-align: center; }
+
+/* ═══════════════════════════════════════════════
+   ONBOARDING SCREEN
+═══════════════════════════════════════════════ */
+#onboarding {
+  position: fixed; inset: 0; z-index: 500;
+  background: #000;
+  display: none; flex-direction: column;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+#onboarding.show { display: flex; }
+
+.ob-header {
+  padding: calc(var(--safe-top) + 32px) 28px 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.ob-logo-mark {
+  margin: 0 auto 16px;
+  animation: logoIn .5s cubic-bezier(.22,1,.36,1) both;
+}
+.ob-title {
+  font-size: 13px; font-weight: 700; letter-spacing: 4px;
+  color: #7CFC00; text-transform: uppercase; margin-bottom: 4px;
+}
+.ob-sub {
+  font-family: var(--font-mono); font-size: 11px;
+  color: rgba(124,252,0,.5); letter-spacing: 1px;
+}
+
+.ob-body {
+  flex: 1; padding: 0 24px calc(var(--safe-bot) + 32px);
+}
+
+.ob-step-label {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 3px;
+  color: rgba(124,252,0,.45); text-transform: uppercase;
+  margin-bottom: 20px; text-align: center;
+}
+
+.ob-field { margin-bottom: 14px; }
+.ob-field label {
+  display: block; font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 2px; color: rgba(124,252,0,.6); text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.ob-input {
+  width: 100%; background: rgba(124,252,0,.05);
+  border: 1px solid rgba(124,252,0,.2); border-radius: 14px;
+  padding: 14px 16px; color: #e8f4ff;
+  font-family: var(--font-disp); font-size: 16px; font-weight: 600;
+  outline: none; -webkit-appearance: none;
+  transition: border-color .2s, background .2s;
+}
+.ob-input:focus {
+  border-color: #7CFC00; background: rgba(124,252,0,.08);
+}
+.ob-input::placeholder { color: rgba(232,244,255,.25); font-weight: 400; }
+.ob-select {
+  width: 100%; background: rgba(124,252,0,.05);
+  border: 1px solid rgba(124,252,0,.2); border-radius: 14px;
+  padding: 14px 16px; color: #e8f4ff;
+  font-family: var(--font-disp); font-size: 16px; font-weight: 600;
+  outline: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237CFC00' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 16px center;
+  cursor: pointer; transition: border-color .2s;
+}
+.ob-select:focus { border-color: #7CFC00; }
+.ob-select option { background: #0a1520; color: #e8f4ff; }
+
+/* Row for two fields side by side */
+.ob-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.ob-divider {
+  height: 1px; background: rgba(124,252,0,.1);
+  margin: 20px 0;
+}
+
+.ob-cta {
+  width: 100%; padding: 16px; border-radius: 16px; border: none;
+  background: #7CFC00; color: #000;
+  font-family: var(--font-disp); font-size: 16px; font-weight: 800;
+  letter-spacing: .5px; cursor: pointer;
+  transition: all .18s; margin-top: 8px;
+  -webkit-appearance: none;
+}
+.ob-cta:active { transform: scale(.97); background: #b8ff60; }
+.ob-cta:disabled { opacity: .35; }
+
+/* Error shake */
+@keyframes shake {
+  0%,100%{transform:none} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)}
+}
+.ob-error { animation: shake .4s; }
+.ob-field-error { border-color: var(--red) !important; }
+.ob-error-msg {
+  font-family: var(--font-mono); font-size: 10px; color: var(--red);
+  margin-top: 5px; padding-left: 4px;
+}
+
+/* ═══════════════════════════════════════════════
+   PROFILE CARD (home page)
+═══════════════════════════════════════════════ */
+#profile-card {
+  background: rgba(124,252,0,.05); border: 1px solid rgba(124,252,0,.18);
+  border-radius: 20px; padding: 18px 20px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 14px;
+}
+.pc-avatar {
+  width: 52px; height: 52px; border-radius: 16px; flex-shrink: 0;
+  background: rgba(124,252,0,.12); border: 1.5px solid rgba(124,252,0,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; color: #7CFC00;
+}
+.pc-info { flex: 1; min-width: 0; }
+.pc-name { font-size: 17px; font-weight: 800; letter-spacing: -.4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-meta { font-family: var(--font-mono); font-size: 10px; color: rgba(232,244,255,.45); margin-top: 3px; }
+.pc-folder {
+  flex-shrink: 0; text-align: right;
+}
+.folder-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 11px; border-radius: 20px;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  background: rgba(124,252,0,.15); color: #7CFC00;
+  border: 1px solid rgba(124,252,0,.3);
+  letter-spacing: .5px;
+}
+.folder-badge svg { width: 12px; height: 12px; }
+
+/* ═══════════════════════════════════════════════
+   FOLDERS PAGE
+═══════════════════════════════════════════════ */
+.folder-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.folder-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px 18px;
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer; transition: all .2s;
+}
+.folder-card:active { transform: scale(.98); }
+.folder-card.mine {
+  border-color: rgba(124,252,0,.3);
+  background: rgba(124,252,0,.04);
+}
+.folder-card .fc-icon {
+  width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.folder-card .fc-name { font-size: 15px; font-weight: 700; }
+.folder-card .fc-desc { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-top: 2px; }
+.folder-card .fc-count { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.folder-card.mine .fc-count { color: #7CFC00; }
+
+/* Athlete list inside folder */
+.athlete-list { display: flex; flex-direction: column; gap: 8px; }
+.athlete-row {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.athlete-row .ar-avatar {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(124,252,0,.1); display: flex; align-items: center;
+  justify-content: center; font-size: 14px; font-weight: 800; color: #7CFC00;
+}
+.athlete-row .ar-name { font-size: 13px; font-weight: 700; }
+.athlete-row .ar-meta { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-top: 1px; }
+.athlete-row .ar-results { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+/* ═══════════════════════════════════════════════
+   GOOGLE SHEETS SYNC INDICATOR
+═══════════════════════════════════════════════ */
+#sync-indicator {
+  position: fixed; bottom: calc(var(--nav-h) + 10px); right: 14px;
+  z-index: 90; display: flex; align-items: center; gap: 6px;
+  background: var(--glass); backdrop-filter: blur(10px);
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 6px 12px; font-family: var(--font-mono); font-size: 10px;
+  color: var(--muted); transition: all .3s; opacity: 0; pointer-events: none;
+}
+#sync-indicator.show { opacity: 1; pointer-events: auto; }
+#sync-indicator .si-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: var(--muted);
+}
+#sync-indicator.syncing .si-dot { background: var(--yellow); animation: pulse 1s infinite; }
+#sync-indicator.ok      .si-dot { background: #7CFC00; }
+#sync-indicator.error   .si-dot { background: var(--red); }
+
+/* Script URL setup card */
+.sheets-setup-card {
+  background: rgba(124,252,0,.04); border: 1px dashed rgba(124,252,0,.25);
+  border-radius: 14px; padding: 16px; margin-bottom: 14px;
+}
+.sheets-setup-card h4 { font-size: 13px; font-weight: 700; color: #7CFC00; margin-bottom: 4px; }
+.sheets-setup-card p  { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+.script-url-input {
+  width: 100%; background: var(--bg2); border: 1px solid rgba(124,252,0,.2);
+  border-radius: 8px; padding: 10px 12px; color: var(--white);
+  font-family: var(--font-mono); font-size: 11px; outline: none;
+  -webkit-appearance: none; margin-bottom: 8px;
+}
+.script-url-input:focus { border-color: #7CFC00; }
+.script-url-input::placeholder { color: rgba(232,244,255,.2); }
+.sync-status-row { display: flex; align-items: center; gap: 8px; }
+.sync-badge {
+  font-family: var(--font-mono); font-size: 10px; padding: 4px 10px;
+  border-radius: 10px; border: 1px solid var(--border);
+}
+.sync-badge.connected { background: rgba(124,252,0,.1); color: #7CFC00; border-color: rgba(124,252,0,.3); }
+.sync-badge.disconnected { background: rgba(255,59,92,.1); color: var(--red); border-color: rgba(255,59,92,.3); }
+.sync-badge.testing { background: rgba(255,224,64,.1); color: var(--yellow); border-color: rgba(255,224,64,.3); }
+/* ═══════════════════════════════════════════════
+   CAMERA ERROR SCREEN
+═══════════════════════════════════════════════ */
+#camera-error {
+  position: absolute; inset: 0; z-index: 40;
+  background: #000; display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px 28px; text-align: center; gap: 16px;
+}
+#camera-error.show { display: flex; }
+.ce-icon { font-size: 52px; margin-bottom: 4px; }
+.ce-title { font-size: 20px; font-weight: 800; color: var(--red); letter-spacing: -.4px; }
+.ce-body  { font-family: var(--font-mono); font-size: 12px; color: rgba(232,244,255,.6); line-height: 1.7; }
+.ce-steps {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px; text-align: left; width: 100%;
+}
+.ce-steps .step {
+  display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start;
+}
+.ce-steps .step:last-child { margin-bottom: 0; }
+.ce-steps .step-num {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: #7CFC00; color: #000; font-weight: 800; font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ce-steps .step-text { font-family: var(--font-mono); font-size: 11px; color: var(--white); line-height: 1.5; }
+.ce-steps .step-text strong { color: #7CFC00; }
+.ce-url {
+  font-family: var(--font-mono); font-size: 11px; color: #7CFC00;
+  background: var(--bg2); border: 1px dashed rgba(124,252,0,.3);
+  border-radius: 8px; padding: 10px 12px; width: 100%;
+  word-break: break-all; text-align: center; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="mp-loader">
+  <div class="ml-logo-wrap">
+    <!-- Heat & Lift SVG logo — recreado fielmente del original -->
+    <svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Rombo: 4 puntas exactas top/right/bottom/left -->
+      <polygon points="80,8 152,80 80,152 8,80"
+               stroke="#7CFC00" stroke-width="3.5" fill="none" stroke-linejoin="miter"/>
+      <!-- Línea vertical: del vértice superior al vértice inferior -->
+      <line x1="80" y1="8" x2="80" y2="152"
+            stroke="#7CFC00" stroke-width="1.8"/>
+    </svg>
+    <!-- Text block -->
+    <svg width="220" height="52" viewBox="0 0 220 52" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top:-8px">
+      <!-- HEAT & LIFT lettering -->
+      <text x="110" y="32" text-anchor="middle"
+            font-family="'Syne', sans-serif" font-weight="800"
+            font-size="28" letter-spacing="3" fill="#7CFC00">HEAT &amp; LIFT</text>
+      <!-- TRAINING subtitle -->
+      <text x="110" y="50" text-anchor="middle"
+            font-family="'Syne', sans-serif" font-weight="400"
+            font-size="11" letter-spacing="6" fill="#7CFC00" opacity="0.75">TRAINING</text>
+    </svg>
+  </div>
+  <div class="spinner" style="border-color:rgba(124,252,0,.2);border-top-color:#7CFC00"></div>
+  <div class="ml-status" id="loader-status">Cargando MediaPipe…</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ONBOARDING — First time registration
+══════════════════════════════════════════ -->
+<div id="onboarding">
+  <div class="ob-header">
+    <div class="ob-logo-mark">
+      <svg width="72" height="72" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="80,8 152,80 80,152 8,80" stroke="#7CFC00" stroke-width="6" fill="none" stroke-linejoin="miter"/>
+        <line x1="80" y1="8" x2="80" y2="152" stroke="#7CFC00" stroke-width="3.5"/>
+      </svg>
+    </div>
+    <div class="ob-title">Heat &amp; Lift Training</div>
+    <div class="ob-sub">// registro de atleta</div>
+  </div>
+
+  <div class="ob-body">
+    <div class="ob-step-label">Completá tu perfil para continuar</div>
+
+    <!-- Nombre y apellido -->
+    <div class="ob-field">
+      <label>Nombre completo</label>
+      <input id="ob-fullname" class="ob-input" type="text"
+             placeholder="Nombre y Apellido"
+             autocomplete="name" autocapitalize="words">
+      <div class="ob-error-msg" id="ob-err-name" style="display:none">Ingresá tu nombre completo</div>
+    </div>
+
+    <!-- Categoría -->
+    <div class="ob-field">
+      <label>Categoría</label>
+      <select id="ob-category" class="ob-select">
+        <option value="" disabled selected>Seleccioná tu categoría…</option>
+        <option value="U11">U11 — Sub 11</option>
+        <option value="U13">U13 — Sub 13</option>
+        <option value="U15">U15 — Sub 15</option>
+        <option value="U17">U17 — Sub 17</option>
+        <option value="U19">U19 — Sub 19</option>
+        <option value="U21">U21 — Sub 21</option>
+        <option value="Superior">Superior</option>
+        <option value="Flex">Flex</option>
+      </select>
+      <div class="ob-error-msg" id="ob-err-cat" style="display:none">Seleccioná una categoría</div>
+    </div>
+
+    <div class="ob-divider"></div>
+
+    <!-- Peso y Altura -->
+    <div class="ob-row">
+      <div class="ob-field">
+        <label>Peso (kg)</label>
+        <input id="ob-weight" class="ob-input" type="number"
+               placeholder="70" inputmode="decimal" min="20" max="200" step="0.1">
+        <div class="ob-error-msg" id="ob-err-weight" style="display:none">Ingresá tu peso</div>
+      </div>
+      <div class="ob-field">
+        <label>Altura (cm)</label>
+        <input id="ob-height" class="ob-input" type="number"
+               placeholder="170" inputmode="decimal" min="100" max="250" step="1">
+        <div class="ob-error-msg" id="ob-err-height" style="display:none">Ingresá tu altura</div>
+      </div>
+    </div>
+
+    <!-- Edad -->
+    <div class="ob-field">
+      <label>Edad</label>
+      <input id="ob-age" class="ob-input" type="number"
+             placeholder="18" inputmode="numeric" min="6" max="80" step="1"
+             style="max-width:160px">
+      <div class="ob-error-msg" id="ob-err-age" style="display:none">Ingresá tu edad</div>
+    </div>
+
+    <div class="ob-divider"></div>
+
+    <button class="ob-cta" id="ob-submit-btn" onclick="Onboarding.submit()">
+      Comenzar →
+    </button>
+
+    <p style="text-align:center;font-family:var(--font-mono);font-size:10px;color:rgba(124,252,0,.35);margin-top:14px">
+      Tus datos se guardan solo en este dispositivo
+    </p>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Sync indicator -->
+<div id="sync-indicator">
+  <div class="si-dot"></div>
+  <span id="sync-label">Drive</span>
+</div>
+
+<!-- Main app -->
+<div id="app" style="display:none">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div class="logo" style="display:flex;align-items:center;gap:8px">
+      <svg width="26" height="26" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="80,8 152,80 80,152 8,80"
+                 stroke="#7CFC00" stroke-width="10" fill="none" stroke-linejoin="miter"/>
+        <line x1="80" y1="8" x2="80" y2="152" stroke="#7CFC00" stroke-width="6"/>
+      </svg>
+      <span style="background:linear-gradient(135deg,#7CFC00,#b8ff60);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:15px;font-weight:800;letter-spacing:-.3px">HEAT &amp; LIFT</span>
+    </div>
+    <div class="session-badge" onclick="App.goPage('session')">
+      <span class="dot"></span>
+      <span id="session-code-display">------</span>
+    </div>
+    <div class="collab-count" id="peer-count"></div>
+  </div>
+
+  <!-- Content -->
+  <div id="content">
+
+    <!-- ── HOME ── -->
+    <div class="page active" id="page-home">
+      <div style="padding-top:16px">
+
+        <!-- Profile card (shown after onboarding) -->
+        <div id="profile-card">
+          <div class="pc-avatar" id="pc-avatar">?</div>
+          <div class="pc-info">
+            <div class="pc-name" id="pc-name">—</div>
+            <div class="pc-meta" id="pc-meta">—</div>
+          </div>
+          <div class="pc-folder">
+            <div class="folder-badge" id="pc-folder-badge">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+              <span id="pc-folder-name">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-title" style="font-size:24px;margin-bottom:4px">Heat &amp; Lift<br><span>Training</span></div>
+        <div class="hero-sub">// biomecánica · tiempo real · colaborativo</div>
+
+        <div class="section-label">Tests disponibles</div>
+        <div class="test-grid">
+          <div class="test-card" data-test="sj" onclick="App.startCapture('sj')">
+            <span class="card-arrow">›</span>
+            <div class="card-icon">⬆</div>
+            <div class="card-name">Squat Jump</div>
+            <div class="card-tag">SJ · altura</div>
+          </div>
+          <div class="test-card" data-test="cmj" onclick="App.startCapture('cmj')">
+            <span class="card-arrow">›</span>
+            <div class="card-icon">↕</div>
+            <div class="card-name">CMJ</div>
+            <div class="card-tag">contramovimiento</div>
+          </div>
+          <div class="test-card" data-test="abalakov" onclick="App.startCapture('abalakov')">
+            <span class="card-arrow">›</span>
+            <div class="card-icon">🤸</div>
+            <div class="card-name">Abalakov</div>
+            <div class="card-tag">CMJ + brazos</div>
+          </div>
+          <div class="test-card" data-test="dropjump" onclick="App.startCapture('dropjump')">
+            <span class="card-arrow">›</span>
+            <div class="card-icon">⚡</div>
+            <div class="card-name">Drop Jump</div>
+            <div class="card-tag">RSI · reactivo</div>
+          </div>
+          <div class="test-card full-width" data-test="distance" onclick="App.startCapture('distance')">
+            <span class="card-arrow">›</span>
+            <div class="card-icon">📏</div>
+            <div>
+              <div class="card-name">Salto en Distancia</div>
+              <div class="card-tag">distancia · calibración métrica</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-label">Sesión colaborativa</div>
+        <div class="collab-card">
+          <h3>Sesión activa</h3>
+          <p>Compartí el código con tu equipo para ver resultados en tiempo real</p>
+          <div class="session-code" id="home-session-code">------</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="App.shareSession()">Compartir</button>
+            <button class="btn btn-secondary" onclick="App.showJoinModal()">Unirse</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CAPTURE ── -->
+    <div class="page" id="page-capture" style="padding:0">
+      <div id="video-container">
+        <video id="input-video" playsinline autoplay muted></video>
+        <canvas id="output-canvas"></canvas>
+
+        <div id="hud">
+          <div id="hud-top">
+            <div id="hud-test-name">—</div>
+            <div id="hud-state" style="color:var(--cyan)">Iniciando…</div>
+          </div>
+          <div id="hud-bottom">
+            <div id="hud-progress-bar"><div id="hud-progress-fill" style="width:0%"></div></div>
+            <div id="hud-metrics"></div>
+          </div>
+        </div>
+
+        <!-- Calibration overlay for distance test -->
+        <div id="calib-overlay">
+          <canvas id="calib-canvas"></canvas>
+          <div id="calib-inst">Tocá los 2 extremos del objeto de referencia<br>luego presioná confirmar</div>
+          <button class="btn btn-primary" id="calib-confirm-btn" onclick="App.confirmCalibration()" style="max-width:200px">Confirmar</button>
+        </div>
+
+        <!-- Result overlay -->
+        <div id="result-overlay">
+          <div id="result-card">
+            <div class="res-test" id="res-test-name">—</div>
+            <div class="res-main" id="res-main-value" style="color:var(--cyan)">—</div>
+            <div class="res-unit" id="res-main-unit">—</div>
+            <div id="result-details"></div>
+            <div class="res-action-row">
+              <button class="btn btn-secondary" onclick="App.resetCapture()">Repetir</button>
+              <button class="btn btn-primary" onclick="App.saveResult()">Guardar ✓</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="cam-controls" style="pointer-events:auto">
+          <button class="cam-btn" onclick="App.flipCamera()" title="Cambiar cámara">🔄</button>
+          <button class="cam-btn" onclick="App.goPage('home')" title="Salir">✕</button>
+        </div>
+
+        <!-- Camera error overlay -->
+        <div id="camera-error">
+          <div class="ce-icon">📵</div>
+          <div class="ce-title">Sin acceso a la cámara</div>
+          <div class="ce-body" id="camera-error-msg">
+            Safari requiere HTTPS para usar la cámara.<br>
+            Publicá la app en GitHub Pages para activarla.
+          </div>
+
+          <div class="ce-steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-text">Entrá a <strong>github.com</strong>, creá cuenta gratis y hacé clic en <strong>New repository</strong></div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-text">Nombre: <strong>heatandlift</strong> · Visibility: <strong>Public</strong> · Crealo</div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-text">Subí el archivo: <strong>Add file → Upload files</strong> → arrastrá el .html → renombralo <strong>index.html</strong> → Commit</div>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-text">Ir a <strong>Settings → Pages → Branch: main → Save</strong>. En minutos queda activo</div>
+            </div>
+            <div class="step">
+              <div class="step-num">5</div>
+              <div class="step-text">Tu URL: <strong>https://tuusuario.github.io/heatandlift</strong> — abrila desde Safari → <strong>Permitir cámara</strong></div>
+            </div>
+          </div>
+
+          <div class="ce-url" id="netlify-url-display" onclick="App.copyNetlifyUrl()" style="display:none">
+            Tocá para copiar la URL
+          </div>
+
+          <button class="btn btn-secondary" onclick="App.retryCameraAccess()" style="width:100%;margin-top:4px">
+            Reintentar
+          </button>
+          <button class="btn" onclick="App.goPage('home')" style="width:100%;background:transparent;color:var(--muted);border:none;font-size:13px">
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HISTORY ── -->
+    <div class="page" id="page-history">
+      <div style="padding-top:16px">
+        <div class="hero-title" style="font-size:28px;margin-bottom:16px">Historial</div>
+        <div class="history-filters" id="history-filters">
+          <div class="filter-chip active" data-filter="all" onclick="App.filterHistory('all',this)">Todos</div>
+          <div class="filter-chip" data-filter="sj"       onclick="App.filterHistory('sj',this)">SJ</div>
+          <div class="filter-chip" data-filter="cmj"      onclick="App.filterHistory('cmj',this)">CMJ</div>
+          <div class="filter-chip" data-filter="abalakov" onclick="App.filterHistory('abalakov',this)">Abalakov</div>
+          <div class="filter-chip" data-filter="dropjump" onclick="App.filterHistory('dropjump',this)">Drop Jump</div>
+          <div class="filter-chip" data-filter="distance" onclick="App.filterHistory('distance',this)">Distancia</div>
+        </div>
+        <div class="history-list" id="history-list"></div>
+      </div>
+    </div>
+
+    <!-- ── SESSION ── -->
+    <div class="page" id="page-session">
+      <div style="padding-top:16px">
+        <div class="hero-title" style="font-size:28px;margin-bottom:4px">Sesión</div>
+        <div class="hero-sub" id="session-subtitle">// conectando…</div>
+
+        <div class="section-label">Participantes</div>
+        <div class="collab-peers" id="peer-list"></div>
+
+        <div class="section-label">Actividad en vivo</div>
+        <div id="live-feed"></div>
+
+        <div style="margin-top:16px">
+          <button class="btn btn-secondary" onclick="App.showJoinModal()" style="width:100%;margin-bottom:8px">Unirse a otra sesión</button>
+          <button class="btn btn-secondary" onclick="App.newSession()" style="width:100%">Nueva sesión</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="page" id="page-settings">
+      <div style="padding-top:16px">
+        <div class="hero-title" style="font-size:28px;margin-bottom:16px">Ajustes</div>
+
+        <div class="settings-group">
+          <div class="sg-label">Atleta</div>
+          <div class="setting-row">
+            <div class="sr-info">
+              <div class="sr-label" id="sett-display-name">—</div>
+              <div class="sr-desc" id="sett-display-meta">—</div>
+            </div>
+            <button class="btn btn-secondary" onclick="App.editProfile()" style="padding:7px 14px;font-size:12px;flex:none">Editar</button>
+          </div>
+          <div class="setting-row">
+            <div class="sr-info"><div class="sr-label">Peso (kg)</div><div class="sr-desc">Para cálculo de potencia</div></div>
+            <input id="sett-weight" type="number" placeholder="75" inputmode="decimal"
+              style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--white);font-family:var(--font-mono);font-size:12px;width:80px;outline:none;-webkit-appearance:none;text-align:right"
+              onchange="App.saveSetting('weight',this.value)">
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="sg-label">Cámara y análisis</div>
+          <div class="setting-row">
+            <div class="sr-info"><div class="sr-label">Cámara trasera</div><div class="sr-desc">Usar cámara posterior por defecto</div></div>
+            <label class="toggle"><input type="checkbox" id="sett-rear" onchange="App.saveSetting('rear',this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="sr-info"><div class="sr-label">Precisión MediaPipe</div><div class="sr-desc">Mayor = más lento</div></div>
+            <select class="sr-select" id="sett-complexity" onchange="App.saveSetting('complexity',this.value)">
+              <option value="0">Rápido</option>
+              <option value="1" selected>Normal</option>
+              <option value="2">Preciso</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <div class="sr-info"><div class="sr-label">Umbral despegue</div><div class="sr-desc">Sensibilidad de detección</div></div>
+            <select class="sr-select" id="sett-threshold" onchange="App.saveSetting('threshold',this.value)">
+              <option value="0.02">Alta</option>
+              <option value="0.03" selected>Normal</option>
+              <option value="0.05">Baja</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="sg-label">Distancia</div>
+          <div class="setting-row">
+            <div class="sr-info"><div class="sr-label">Longitud referencia</div><div class="sr-desc">Objeto de calibración (metros)</div></div>
+            <input id="sett-calib" type="number" placeholder="1.0" inputmode="decimal" step="0.1"
+              style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--white);font-family:var(--font-mono);font-size:12px;width:80px;outline:none;-webkit-appearance:none;text-align:right"
+              onchange="App.saveSetting('calibLength',this.value)">
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="sg-label">Google Drive / Sheets</div>
+
+          <div class="sheets-setup-card">
+            <h4>📊 Sincronización con Google Sheets</h4>
+            <p>Pegá la URL de tu Apps Script publicado para sincronizar automáticamente cada resultado con el spreadsheet de Heat &amp; Lift.</p>
+
+            <input type="url" id="sett-script-url" class="script-url-input"
+              placeholder="https://script.google.com/macros/s/…/exec"
+              onchange="SheetsSync.setUrl(this.value)">
+
+            <div class="sync-status-row">
+              <button class="btn btn-secondary" onclick="SheetsSync.test()" style="padding:7px 14px;font-size:11px;flex:none">Verificar conexión</button>
+              <span class="sync-badge disconnected" id="sheets-sync-badge">Sin configurar</span>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="sr-info"><div class="sr-label">Sincronización automática</div><div class="sr-desc">Enviar cada resultado al guardar</div></div>
+            <label class="toggle"><input type="checkbox" id="sett-autosync" onchange="App.saveSetting('autosync',this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="sr-info"><div class="sr-label">Sincronizar historial</div><div class="sr-desc">Enviar todos los registros pendientes</div></div>
+            <button class="btn btn-secondary" onclick="SheetsSync.syncAll()" style="padding:7px 14px;font-size:12px;flex:none">Sincronizar</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="sg-label">Datos</div>
+          <div class="setting-row">
+            <div class="sr-info"><div class="sr-label">Exportar Excel</div><div class="sr-desc">Descargar resultados como .xlsx</div></div>
+            <button class="btn btn-secondary" onclick="App.exportXLSX()" style="padding:7px 14px;font-size:12px;flex:none">Exportar</button>
+          </div>
+          <div class="setting-row">
+            <div class="sr-info"><div class="sr-label">Limpiar historial</div><div class="sr-desc">Elimina todos los registros</div></div>
+            <button class="btn" onclick="App.clearHistory()" style="padding:7px 14px;font-size:12px;flex:none;background:rgba(255,59,92,.15);color:var(--red);border:1px solid rgba(255,59,92,.3)">Limpiar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FOLDERS ── -->
+    <div class="page" id="page-folders">
+      <div style="padding-top:16px">
+        <div class="hero-title" style="font-size:28px;margin-bottom:4px">Carpetas</div>
+        <div class="hero-sub" id="folders-sub">// categorías colaborativas</div>
+
+        <!-- Back button when inside a folder -->
+        <div id="folder-back" style="display:none;margin-bottom:16px">
+          <button onclick="Folders.showList()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:8px 14px;color:var(--muted);font-family:var(--font-mono);font-size:12px;cursor:pointer">← Volver</button>
+        </div>
+
+        <div id="folders-list-view">
+          <div class="folder-grid" id="folder-grid"></div>
+        </div>
+
+        <div id="folder-detail-view" style="display:none">
+          <div style="margin-bottom:16px">
+            <div class="section-label">Atletas en esta categoría</div>
+            <div class="athlete-list" id="athlete-list"></div>
+          </div>
+          <div>
+            <div class="section-label">Resultados de la carpeta</div>
+            <div class="history-list" id="folder-history-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- Bottom nav -->
+  <nav id="nav">
+    <div class="nav-item active" onclick="App.goPage('home')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span>Inicio</span>
+    </div>
+    <div class="nav-item" onclick="App.goPage('capture')" id="nav-capture">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/><path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+      <span>Cámara</span>
+    </div>
+    <div class="nav-item" onclick="App.goPage('folders')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+      <span>Carpetas</span>
+    </div>
+    <div class="nav-item" onclick="App.goPage('history')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+      <span>Historial</span>
+    </div>
+    <div class="nav-item" onclick="App.goPage('session')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <span>Sesión</span>
+    </div>
+    <div class="nav-item" onclick="App.goPage('settings')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <span>Ajustes</span>
+    </div>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- Modal -->
+<div id="modal-overlay" onclick="App.closeModal()">
+  <div id="modal-sheet" onclick="e=>e.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Unirse a sesión</div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- MediaPipe CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   HEAT & LIFT TRAINING — App Logic
+   Architecture:
+     App        → navigation, UI, settings, collab
+     Pose       → MediaPipe wrapper
+     Analyzers  → state machines per test (SJ/CMJ/Abalakov/DJ/Distance)
+     Collab     → BroadcastChannel + localStorage for session sharing
+     History    → localStorage persistence
+═══════════════════════════════════════════════════════════════════ */
+
+const G = 9.81;
+
+/* ── UTILS ─────────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const qs = sel => document.querySelector(sel);
+
+function genCode(len=6) {
+  return Math.random().toString(36).substring(2,2+len).toUpperCase();
+}
+function lerp(a,b,t){ return a+(b-a)*t; }
+function distPx(p1,p2){ return Math.hypot(p1.x-p2.x, p1.y-p2.y); }
+function angle3(A,V,B){
+  const ax=A.x-V.x, ay=A.y-V.y, bx=B.x-V.x, by=B.y-V.y;
+  const dot=ax*bx+ay*by, cross=Math.hypot(ax,ay)*Math.hypot(bx,by);
+  return cross<1e-9 ? 0 : Math.acos(Math.max(-1,Math.min(1,dot/cross)))*180/Math.PI;
+}
+
+/* ── ATHLETES STORE ─────────────────────────────────────────────── */
+const Athletes = {
+  // All athletes registered on this device (collaborative: each device registers itself,
+  // shared via BroadcastChannel so others appear in Folders)
+  _me: null,      // this device's athlete profile
+  _peers: {},     // other athletes seen in session keyed by peerId
+
+  CATEGORIES: ['U11','U13','U15','U17','U19','U21','Superior','Flex'],
+
+  CAT_META: {
+    U11:      { label:'U11',      desc:'Sub 11 años',  icon:'👦', color:'#60a5fa' },
+    U13:      { label:'U13',      desc:'Sub 13 años',  icon:'🧒', color:'#34d399' },
+    U15:      { label:'U15',      desc:'Sub 15 años',  icon:'🧑', color:'#fbbf24' },
+    U17:      { label:'U17',      desc:'Sub 17 años',  icon:'🧑', color:'#f97316' },
+    U19:      { label:'U19',      desc:'Sub 19 años',  icon:'🧑', color:'#f43f5e' },
+    U21:      { label:'U21',      desc:'Sub 21 años',  icon:'🧑', color:'#a78bfa' },
+    Superior: { label:'Superior', desc:'Mayor categoría', icon:'⭐', color:'#7CFC00' },
+    Flex:     { label:'Flex',     desc:'Categoría flexible', icon:'🔄', color:'#22d3ee' },
+  },
+
+  loadMe(){
+    try { this._me = JSON.parse(localStorage.getItem('hl_athlete')||'null'); }
+    catch { this._me = null; }
+    return this._me;
+  },
+
+  saveMe(profile){
+    this._me = { ...profile, deviceId: genCode(10), registeredAt: new Date().toISOString() };
+    localStorage.setItem('hl_athlete', JSON.stringify(this._me));
+    return this._me;
+  },
+
+  isRegistered(){ return this._me !== null; },
+
+  getMe(){ return this._me; },
+
+  addPeer(peerId, profile){
+    if(profile && profile.fullname) this._peers[peerId] = profile;
+  },
+
+  removePeer(peerId){ delete this._peers[peerId]; },
+
+  // All athletes: me + peers grouped by category
+  getAllByCategory(){
+    const all = [];
+    if(this._me) all.push({ ...this._me, isMe: true });
+    Object.values(this._peers).forEach(p => all.push({ ...p, isMe: false }));
+    const grouped = {};
+    this.CATEGORIES.forEach(c => { grouped[c] = []; });
+    all.forEach(a => { if(grouped[a.category]) grouped[a.category].push(a); });
+    return grouped;
+  },
+};
+
+/* ── ONBOARDING ─────────────────────────────────────────────────── */
+const Onboarding = {
+  show(){
+    $('onboarding').classList.add('show');
+  },
+
+  hide(){
+    $('onboarding').classList.remove('show');
+  },
+
+  _clearErrors(){
+    ['ob-err-name','ob-err-cat','ob-err-weight','ob-err-height','ob-err-age'].forEach(id=>{
+      const el=$(id); if(el) el.style.display='none';
+    });
+    ['ob-fullname','ob-category','ob-weight','ob-height','ob-age'].forEach(id=>{
+      const el=$(id); if(el) el.classList.remove('ob-field-error');
+    });
+  },
+
+  submit(){
+    this._clearErrors();
+    const fullname = $('ob-fullname').value.trim();
+    const category = $('ob-category').value;
+    const weight   = parseFloat($('ob-weight').value);
+    const height   = parseFloat($('ob-height').value);
+    const age      = parseInt($('ob-age').value);
+
+    let hasError = false;
+
+    if(!fullname || fullname.split(' ').length < 1 || fullname.length < 2){
+      $('ob-err-name').style.display='block';
+      $('ob-fullname').classList.add('ob-field-error');
+      hasError = true;
+    }
+    if(!category){
+      $('ob-err-cat').style.display='block';
+      $('ob-category').classList.add('ob-field-error');
+      hasError = true;
+    }
+    if(!weight || weight < 20 || weight > 200){
+      $('ob-err-weight').style.display='block';
+      $('ob-weight').classList.add('ob-field-error');
+      hasError = true;
+    }
+    if(!height || height < 100 || height > 250){
+      $('ob-err-height').style.display='block';
+      $('ob-height').classList.add('ob-field-error');
+      hasError = true;
+    }
+    if(!age || age < 6 || age > 80){
+      $('ob-err-age').style.display='block';
+      $('ob-age').classList.add('ob-field-error');
+      hasError = true;
+    }
+    if(hasError){
+      $('ob-body')?.classList.add('ob-error');
+      setTimeout(()=>$('ob-body')?.classList.remove('ob-error'), 500);
+      return;
+    }
+
+    // Save profile
+    const profile = { fullname, category, weight, height, age };
+    Athletes.saveMe(profile);
+
+    // Sync settings used by analyzers
+    Settings.set('name', fullname.split(' ')[0]);
+    Settings.set('weight', weight);
+
+    this.hide();
+    App.onAthleteRegistered();
+  },
+};
+
+/* ── FOLDERS ─────────────────────────────────────────────────────── */
+const Folders = {
+  _currentFolder: null,
+
+  showList(){
+    this._currentFolder = null;
+    $('folders-list-view').style.display = 'block';
+    $('folder-detail-view').style.display = 'none';
+    $('folder-back').style.display = 'none';
+    $('folders-sub').textContent = '// categorías colaborativas';
+    this.renderList();
+  },
+
+  renderList(){
+    const grouped = Athletes.getAllByCategory();
+    const myCategory = Athletes.getMe()?.category;
+    const grid = $('folder-grid');
+
+    grid.innerHTML = Athletes.CATEGORIES.map(cat => {
+      const meta = Athletes.CAT_META[cat];
+      const athletes = grouped[cat] || [];
+      const count = athletes.length;
+      const isMine = cat === myCategory;
+      const histCount = History.getAll('all').filter(h=>h.athleteCategory===cat).length;
+      return `
+        <div class="folder-card${isMine?' mine':''}" onclick="Folders.openFolder('${cat}')">
+          <div class="fc-icon" style="background:${meta.color}18;color:${meta.color}">${meta.icon}</div>
+          <div>
+            <div class="fc-name" style="${isMine?'color:#7CFC00':''}">${meta.label}${isMine?' <span style="font-size:10px;opacity:.6">(tu categoría)</span>':''}</div>
+            <div class="fc-desc">${meta.desc}</div>
+          </div>
+          <div class="fc-count">
+            ${count > 0 ? `${count} atleta${count!==1?'s':''}` : '—'}
+            ${histCount > 0 ? `<br><span style="color:var(--cyan)">${histCount} tests</span>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  },
+
+  openFolder(cat){
+    this._currentFolder = cat;
+    const meta = Athletes.CAT_META[cat];
+    const grouped = Athletes.getAllByCategory();
+    const athletes = grouped[cat] || [];
+
+    $('folders-list-view').style.display = 'none';
+    $('folder-detail-view').style.display = 'block';
+    $('folder-back').style.display = 'block';
+    $('folders-sub').innerHTML = `<span style="color:${meta.color}">${meta.icon} ${meta.label}</span> — ${meta.desc}`;
+
+    // Athlete list
+    const aList = $('athlete-list');
+    if(!athletes.length){
+      aList.innerHTML = `<div class="empty-state" style="padding:30px 0"><div class="es-icon">👥</div>Sin atletas registrados en esta categoría</div>`;
+    } else {
+      aList.innerHTML = athletes.map(a => {
+        const initials = a.fullname.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        const myResults = History.getAll('all').filter(h => h.athleteId === a.deviceId).length;
+        return `
+          <div class="athlete-row">
+            <div class="ar-avatar">${initials}</div>
+            <div>
+              <div class="ar-name">${a.fullname}${a.isMe?' <span style="font-size:9px;color:#7CFC00;font-family:var(--font-mono)">TÚ</span>':''}</div>
+              <div class="ar-meta">${a.age} años · ${a.weight}kg · ${a.height}cm</div>
+            </div>
+            <div class="ar-results">${myResults} test${myResults!==1?'s':''}</div>
+          </div>`;
+      }).join('');
+    }
+
+    // History for this folder
+    const folderHistory = History.getAll('all').filter(h => h.athleteCategory === cat);
+    const hList = $('folder-history-list');
+    const icons = {sj:'⬆',cmj:'↕',abalakov:'🤸',dropjump:'⚡',distance:'📏'};
+    const colors = {sj:'var(--cyan)',cmj:'var(--cyan2)',abalakov:'var(--yellow)',dropjump:'var(--orange)',distance:'var(--red)'};
+    const names = {sj:'Squat Jump',cmj:'CMJ',abalakov:'Abalakov',dropjump:'Drop Jump',distance:'Distancia'};
+
+    if(!folderHistory.length){
+      hList.innerHTML = `<div class="empty-state" style="padding:20px 0"><div class="es-icon">📊</div>Sin tests en esta carpeta aún</div>`;
+    } else {
+      hList.innerHTML = folderHistory.slice(0,20).map(e => `
+        <div class="history-item">
+          <div class="hi-icon" style="background:${colors[e.test]||'var(--cyan)'}20">${icons[e.test]||'↑'}</div>
+          <div class="hi-info">
+            <div class="hi-test">${e.athleteName||'—'} · ${names[e.test]||e.test}</div>
+            <div class="hi-meta">${new Date(e.ts).toLocaleDateString('es')} ${new Date(e.ts).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+          <div class="hi-result">
+            <div class="hi-main" style="color:${colors[e.test]||'var(--cyan)'}">${e.mainValue}</div>
+            <div class="hi-unit">${e.mainUnit}</div>
+          </div>
+        </div>`).join('');
+    }
+  },
+};
+
+/* MediaPipe landmark indices */
+const LM = {
+  L_SHOULDER:11, R_SHOULDER:12, L_ELBOW:13, R_ELBOW:14,
+  L_WRIST:15,    R_WRIST:16,
+  L_HIP:23,      R_HIP:24,
+  L_KNEE:25,     R_KNEE:26,
+  L_ANKLE:27,    R_ANKLE:28,
+  L_HEEL:29,     R_HEEL:30,
+  L_FOOT_INDEX:31, R_FOOT_INDEX:32,
+};
+
+/* ── SHEETS SYNC ─────────────────────────────────────────────────
+   Communicates with the published Google Apps Script Web App.
+   Each result is sent via POST to the script URL.
+   Unsent results are queued in localStorage and retried.
+═══════════════════════════════════════════════════════════════ */
+const SheetsSync = {
+  _url: '',
+  _queue: [],    // results pending upload
+  _syncing: false,
+
+  load(){
+    this._url   = localStorage.getItem('hl_script_url') || '';
+    try { this._queue = JSON.parse(localStorage.getItem('hl_sync_queue')||'[]'); } catch { this._queue=[]; }
+    if(this._url) this._updateBadge('connected', '● Configurado');
+  },
+
+  setUrl(url){
+    this._url = url.trim();
+    localStorage.setItem('hl_script_url', this._url);
+    if(this._url){
+      this._updateBadge('connected', '● Configurado');
+    } else {
+      this._updateBadge('disconnected', 'Sin configurar');
+    }
+  },
+
+  isConfigured(){ return !!this._url; },
+
+  // ── Verify connection ─────────────────────────────────────────
+  async test(){
+    if(!this._url){ App.toast('Primero pegá la URL del script'); return; }
+    this._updateBadge('testing', '⟳ Verificando…');
+    try {
+      const r = await fetch(this._url, { method:'GET', mode:'cors' });
+      const data = await r.json();
+      if(data.ok){
+        this._updateBadge('connected', '✓ Conectado');
+        App.toast('✓ Conexión con Google Sheets exitosa');
+      } else {
+        throw new Error(data.error||'Respuesta inesperada');
+      }
+    } catch(e){
+      this._updateBadge('disconnected', '✗ Error');
+      App.toast('Error: ' + e.message);
+    }
+  },
+
+  // ── Send one result ───────────────────────────────────────────
+  async sendResult(result){
+    if(!this._url) return;
+    this._showIndicator('syncing', 'Guardando…');
+    try {
+      const r = await this._post({ action:'saveResult', result });
+      if(r.ok){
+        this._showIndicator('ok', '✓ Drive');
+        setTimeout(()=>this._hideIndicator(), 2500);
+      } else {
+        throw new Error(r.error||'Error desconocido');
+      }
+    } catch(e){
+      // Queue for retry
+      this._queue.push({ type:'result', data: result, ts: Date.now() });
+      this._saveQueue();
+      this._showIndicator('error', '✗ Sin conexión');
+      setTimeout(()=>this._hideIndicator(), 3000);
+    }
+  },
+
+  // ── Send athlete profile ──────────────────────────────────────
+  async sendAthlete(athlete){
+    if(!this._url) return;
+    try {
+      await this._post({ action:'saveAthlete', athlete });
+    } catch(e){
+      this._queue.push({ type:'athlete', data: athlete, ts: Date.now() });
+      this._saveQueue();
+    }
+  },
+
+  // ── Sync all pending + history ────────────────────────────────
+  async syncAll(){
+    if(!this._url){ App.toast('Configurá primero la URL del script'); return; }
+    if(this._syncing){ App.toast('Sincronización en curso…'); return; }
+    this._syncing = true;
+    this._showIndicator('syncing', 'Sincronizando…');
+
+    // Send queued items first
+    const pending = [...this._queue];
+    this._queue = [];
+    this._saveQueue();
+    for(const item of pending){
+      try {
+        if(item.type==='result')  await this._post({ action:'saveResult',  result:  item.data });
+        if(item.type==='athlete') await this._post({ action:'saveAthlete', athlete: item.data });
+      } catch {
+        this._queue.push(item);
+        this._saveQueue();
+      }
+    }
+
+    // Send full history
+    const all = History.getAll('all');
+    let sent = 0;
+    for(const entry of all){
+      try {
+        const r = await this._post({ action:'saveResult', result: entry });
+        if(r.ok) sent++;
+      } catch {}
+      await new Promise(res=>setTimeout(res, 120)); // avoid rate limit
+    }
+
+    this._syncing = false;
+    this._showIndicator('ok', `✓ ${sent} enviados`);
+    setTimeout(()=>this._hideIndicator(), 3000);
+    App.toast(`✓ ${sent} registros sincronizados con Drive`);
+  },
+
+  // ── HTTP helper ───────────────────────────────────────────────
+  async _post(body){
+    const r = await fetch(this._url, {
+      method:  'POST',
+      mode:    'cors',
+      headers: { 'Content-Type': 'text/plain' }, // Apps Script requires text/plain for CORS
+      body:    JSON.stringify(body),
+    });
+    return r.json();
+  },
+
+  _saveQueue(){
+    localStorage.setItem('hl_sync_queue', JSON.stringify(this._queue.slice(0,200)));
+  },
+
+  // ── UI helpers ────────────────────────────────────────────────
+  _updateBadge(cls, text){
+    const b = $('sheets-sync-badge');
+    if(!b) return;
+    b.className = 'sync-badge ' + cls;
+    b.textContent = text;
+  },
+
+  _showIndicator(state, text){
+    const el = $('sync-indicator');
+    if(!el) return;
+    el.className = 'show ' + state;
+    $('sync-label').textContent = text;
+  },
+
+  _hideIndicator(){
+    const el = $('sync-indicator');
+    if(el) el.classList.remove('show');
+  },
+};
+
+/* ── SETTINGS ──────────────────────────────────────────────────── */
+const Settings = {
+  defaults: { name:'Atleta', weight:75, rear:false, complexity:1, threshold:0.03, calibLength:1.0 },
+  _d: {},
+  load(){
+    try{ this._d = {...this.defaults, ...JSON.parse(localStorage.getItem('jl_settings')||'{}')}; }
+    catch{ this._d={...this.defaults}; }
+    return this._d;
+  },
+  get(k){ return this._d[k]??this.defaults[k]; },
+  set(k,v){
+    this._d[k]=v;
+    localStorage.setItem('jl_settings', JSON.stringify(this._d));
+  },
+};
+Settings.load();
+
+/* ── HISTORY ────────────────────────────────────────────────────── */
+const History = {
+  _data: [],
+  load(){
+    try{ this._data = JSON.parse(localStorage.getItem('jl_history')||'[]'); }
+    catch{ this._data=[]; }
+    return this._data;
+  },
+  save(entry){
+    this._data.unshift({ ...entry, id: Date.now(), ts: new Date().toISOString() });
+    localStorage.setItem('jl_history', JSON.stringify(this._data.slice(0,500)));
+    return this._data[0];
+  },
+  getAll(filter='all'){
+    return filter==='all' ? this._data : this._data.filter(d=>d.test===filter);
+  },
+  clear(){ this._data=[]; localStorage.removeItem('jl_history'); },
+  toRows(){
+    // Returns array-of-arrays ready for SheetJS
+    const testNames={sj:'Squat Jump',cmj:'CMJ',abalakov:'Abalakov',dropjump:'Drop Jump',distance:'Distancia'};
+    const header=['ID','Test','Fecha','Hora','Resultado','Unidad',
+      'Detalle 1 (clave)','Detalle 1 (valor)',
+      'Detalle 2 (clave)','Detalle 2 (valor)',
+      'Detalle 3 (clave)','Detalle 3 (valor)',
+      'Detalle 4 (clave)','Detalle 4 (valor)'];
+    const rows=[header];
+    this._data.forEach(d=>{
+      const dt=new Date(d.ts);
+      const fecha=dt.toLocaleDateString('es-AR');
+      const hora=dt.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      const details=Object.entries(d.details||{});
+      const detCols=[];
+      for(let i=0;i<4;i++){
+        detCols.push(details[i]?details[i][0]:'');
+        detCols.push(details[i]?details[i][1]:'');
+      }
+      rows.push([d.id, testNames[d.test]||d.test, fecha, hora,
+        parseFloat(d.mainValue)||d.mainValue, d.mainUnit, ...detCols]);
+    });
+    return rows;
+  },
+};
+History.load();
+
+/* ── COLLAB ─────────────────────────────────────────────────────── */
+const Collab = {
+  sessionCode: '',
+  myName: '',
+  myId: genCode(8),
+  peers: {},
+  _bc: null,
+  _listeners: [],
+
+  init(){
+    this.myName = Settings.get('name');
+    const saved = localStorage.getItem('jl_session');
+    this.sessionCode = saved || genCode(6);
+    localStorage.setItem('jl_session', this.sessionCode);
+    this._openChannel();
+    this._announce();
+  },
+
+  _openChannel(){
+    if(this._bc) try{ this._bc.close(); }catch{}
+    this._bc = new BroadcastChannel('heatandlift_' + this.sessionCode);
+    this._bc.onmessage = e => this._onMsg(e.data);
+  },
+
+  _announce(){
+    const me = Athletes.getMe();
+    this._send({ type:'HELLO', name: me?.fullname || this.myName, id:this.myId, athlete: me });
+  },
+
+  _send(data){
+    try{ this._bc?.postMessage({ ...data, from: this.myId, session: this.sessionCode }); }
+    catch{}
+  },
+
+  _onMsg(data){
+    if(!data || data.from===this.myId) return;
+    if(data.type==='HELLO' || data.type==='HEARTBEAT'){
+      this.peers[data.from] = { name:data.name||'Atleta', id:data.from, lastSeen:Date.now() };
+      // Register peer athlete profile in Athletes store
+      if(data.athlete) Athletes.addPeer(data.from, data.athlete);
+      if(data.type==='HELLO') this._send({type:'HEARTBEAT', name:this.myName, id:this.myId, athlete: Athletes.getMe()});
+      this._notifyUI();
+    }
+    if(data.type==='RESULT'){
+      this._listeners.forEach(fn=>fn(data));
+      this._notifyUI();
+    }
+    if(data.type==='BYE'){
+      delete this.peers[data.from];
+      Athletes.removePeer(data.from);
+      this._notifyUI();
+    }
+  },
+
+  broadcastResult(result){
+    this._send({ type:'RESULT', result, name:this.myName });
+  },
+
+  join(code){
+    this.sessionCode = code.toUpperCase().trim();
+    localStorage.setItem('jl_session', this.sessionCode);
+    this.peers = {};
+    this._openChannel();
+    this._announce();
+    this._notifyUI();
+  },
+
+  newSession(){
+    this.sessionCode = genCode(6);
+    localStorage.setItem('jl_session', this.sessionCode);
+    this.peers = {};
+    this._openChannel();
+    this._announce();
+    this._notifyUI();
+  },
+
+  onResult(fn){ this._listeners.push(fn); },
+
+  getPeerList(){ return Object.values(this.peers); },
+
+  _notifyUI(){ App.updateCollabUI(); },
+
+  peerCount(){ return Object.keys(this.peers).length; },
+};
+
+/* ── POSE ENGINE ────────────────────────────────────────────────── */
+const PoseEngine = {
+  _pose: null,
+  _camera: null,
+  _stream: null,
+  _onResultsCb: null,
+  _facingMode: 'user',
+  _animFrame: null,
+
+  async init(loaderStatus){
+    loaderStatus('Inicializando MediaPipe Pose…');
+    this._pose = new Pose({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`
+    });
+    this._pose.setOptions({
+      modelComplexity: Settings.get('complexity'),
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    });
+    this._pose.onResults(r => this._onResultsCb?.(r));
+    loaderStatus('Cargando modelos… (primera vez puede tardar)');
+    await this._pose.initialize();
+    loaderStatus('Listo ✓');
+  },
+
+  // ── Check if camera access is possible ───────────────────────
+  async checkPermission(){
+    // HTTPS required for getUserMedia on iOS
+    if(location.protocol !== 'https:' && location.hostname !== 'localhost'){
+      return { ok: false, reason: 'https' };
+    }
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      return { ok: false, reason: 'unsupported' };
+    }
+    // Try a quick permission probe
+    try {
+      const probe = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      probe.getTracks().forEach(t => t.stop());
+      return { ok: true };
+    } catch(e) {
+      const reason = e.name === 'NotAllowedError'    ? 'denied'
+                   : e.name === 'NotFoundError'      ? 'notfound'
+                   : e.name === 'OverconstrainedError' ? 'overconstrained'
+                   : 'unknown';
+      return { ok: false, reason, message: e.message };
+    }
+  },
+
+  async startCamera(videoEl, canvasEl, onResults){
+    this._onResultsCb = onResults;
+
+    // Stop previous stream
+    await this.stopCamera();
+
+    this._facingMode = Settings.get('rear') ? 'environment' : 'user';
+
+    // Build constraints — progressive fallback for iOS compatibility
+    const constraintSets = [
+      { video: { facingMode: this._facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+      { video: { facingMode: this._facingMode, width: { ideal: 640 },  height: { ideal: 480 } }, audio: false },
+      { video: { facingMode: this._facingMode }, audio: false },
+      { video: true, audio: false },
+    ];
+
+    let stream = null;
+    let lastError = null;
+
+    for(const constraints of constraintSets){
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        break;
+      } catch(e) {
+        lastError = e;
+        // NotAllowedError won't be fixed by different constraints — stop trying
+        if(e.name === 'NotAllowedError') break;
+      }
+    }
+
+    if(!stream){
+      throw lastError || new Error('No se pudo acceder a la cámara');
+    }
+
+    this._stream = stream;
+    videoEl.srcObject = stream;
+    videoEl.setAttribute('playsinline', '');
+    videoEl.setAttribute('autoplay', '');
+    videoEl.muted = true;
+
+    await new Promise((resolve, reject) => {
+      videoEl.onloadedmetadata = () => {
+        videoEl.play().then(resolve).catch(reject);
+      };
+      videoEl.onerror = reject;
+      setTimeout(reject, 10000); // 10s timeout
+    });
+
+    // Match canvas to video
+    canvasEl.width  = videoEl.videoWidth  || 640;
+    canvasEl.height = videoEl.videoHeight || 480;
+
+    // Feed frames to MediaPipe via rAF loop
+    const sendFrame = async () => {
+      if(!this._stream) return;
+      if(videoEl.readyState >= 2 && !videoEl.paused){
+        try { await this._pose?.send({ image: videoEl }); } catch {}
+      }
+      this._animFrame = requestAnimationFrame(sendFrame);
+    };
+    this._animFrame = requestAnimationFrame(sendFrame);
+
+    // Update canvas size on resize/rotation
+    videoEl.addEventListener('resize', () => {
+      if(videoEl.videoWidth) {
+        canvasEl.width  = videoEl.videoWidth;
+        canvasEl.height = videoEl.videoHeight;
+      }
+    });
+  },
+
+  async flipCamera(){
+    Settings.set('rear', !Settings.get('rear'));
+    const vid = $('input-video'), can = $('output-canvas');
+    await this.startCamera(vid, can, this._onResultsCb);
+  },
+
+  async stopCamera(){
+    if(this._animFrame){ cancelAnimationFrame(this._animFrame); this._animFrame=null; }
+    if(this._stream){
+      this._stream.getTracks().forEach(t => t.stop());
+      this._stream = null;
+    }
+    const vid = $('input-video');
+    if(vid){ vid.srcObject = null; }
+    // Legacy Camera utility cleanup
+    try{ await this._camera?.stop(); } catch{}
+    this._camera = null;
+  },
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   ANALYZER STATE MACHINES
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Base class ── */
+class BaseAnalyzer {
+  constructor(threshold=0.03){
+    this.threshold = threshold;
+    this.state     = 'INIT';
+    this.baseline  = null;
+    this._baseBuf  = [];
+    this.ankleYHist= [];
+    this.result    = null;
+    this._frameCount = 0;
+    this.fps       = 30;
+  }
+  _avgAnkleY(lms){
+    const ys=[];
+    [LM.L_ANKLE,LM.R_ANKLE].forEach(i=>{ if(lms[i].visibility>0.3) ys.push(lms[i].y); });
+    return ys.length ? ys.reduce((a,b)=>a+b)/ys.length : null;
+  }
+  _midY(lms,a,b){
+    if(lms[a].visibility<0.25||lms[b].visibility<0.25) return null;
+    return (lms[a].y+lms[b].y)/2;
+  }
+  _calibrateBaseline(ay, n=30){
+    if(this.baseline!==null) return;
+    if(ay!==null) this._baseBuf.push(ay);
+    if(this._baseBuf.length>=n){
+      this.baseline = this._baseBuf.reduce((a,b)=>a+b)/this._baseBuf.length;
+    }
+  }
+  _height_m(flight_frames){ return G*(flight_frames/this.fps)**2/8; }
+  _power_w(h_m){ const kg=Settings.get('weight'); return 60.7*(h_m*100)+45.3*kg-2055; }
+  tick(lms, fps){ this.fps=fps; this._frameCount++; }
+  getHUD(){ return { state:'INIT', progress:0, metrics:[] }; }
+}
+
+/* ── SJ ── */
+class SJAnalyzer extends BaseAnalyzer {
+  constructor(t){ super(t);
+    this._holdCount=0; this._kneeRef=null;
+    this._hipBuf=[]; this._liftoff=null; this._landing=null;
+  }
+  tick(lms,fps){
+    super.tick(lms,fps);
+    const ay = this._avgAnkleY(lms);
+    const hy = this._midY(lms,LM.L_HIP,LM.R_HIP);
+    this._calibrateBaseline(ay,30);
+    this.ankleYHist.push(ay??NaN);
+
+    if(this.state==='INIT') this.state='SETUP';
+
+    if(this.state==='SETUP'){
+      const knee = this._kneeAngle(lms);
+      if(knee && Math.abs(knee-90)<15){
+        this._holdCount++;
+        this._kneeRef = knee;
+        if(this._holdCount>=20) this.state='READY';
+      } else { this._holdCount=0; }
+    }
+
+    if(this.state==='READY'){
+      if(hy) this._hipBuf.push(hy);
+      if(ay!==null && this.baseline!==null && (this.baseline-ay)>this.threshold){
+        this._liftoff=this._frameCount;
+        // CMJ detection: hip drop before liftoff
+        const drop = this._hipBuf.length>5 ?
+          Math.max(...this._hipBuf.slice(-20))-this._hipBuf[this._hipBuf.length-1] : 0;
+        this._cmjWarning = drop>0.015;
+        this.state='FLIGHT';
+      }
+    }
+    if(this.state==='FLIGHT'){
+      if(ay!==null && this.baseline!==null && (this.baseline-ay)<0.015){
+        const ff=this._frameCount-this._liftoff;
+        if(ff>=5){
+          this._landing=this._frameCount;
+          const hm=this._height_m(ff);
+          this.result={ test:'sj', mainValue:(hm*100).toFixed(1), mainUnit:'cm',
+            details:{ 'Tiempo vuelo':((ff/fps).toFixed(3)+'s'),
+                      'Potencia':(this._power_w(hm).toFixed(0)+' W'),
+                      'Rodilla':(this._kneeRef?.toFixed(0)+'°'||'—'),
+                      'Advertencia': this._cmjWarning?'⚠ CMJ detectado':'SJ válido' }};
+          this.state='DONE';
+        } else { this.state='READY'; this._liftoff=null; }
+      }
+    }
+  }
+  _kneeAngle(lms){
+    const sides=[[LM.L_HIP,LM.L_KNEE,LM.L_ANKLE],[LM.R_HIP,LM.R_KNEE,LM.R_ANKLE]];
+    const angs=sides.map(([h,k,a])=>{
+      if(lms[h].visibility<0.3||lms[k].visibility<0.3||lms[a].visibility<0.3) return null;
+      return angle3({x:lms[h].x,y:lms[h].y},{x:lms[k].x,y:lms[k].y},{x:lms[a].x,y:lms[a].y});
+    }).filter(v=>v!==null);
+    return angs.length ? angs.reduce((a,b)=>a+b)/angs.length : null;
+  }
+  getHUD(){
+    const s=this.state;
+    const msgs={INIT:'Iniciando…',SETUP:'Flexioná rodilla a 90°',READY:'¡Listo para saltar!',
+                FLIGHT:'✈ En vuelo…',DONE:'✓ Salto detectado'};
+    const cols={SETUP:'var(--orange)',READY:'var(--green)',FLIGHT:'var(--cyan)',DONE:'var(--green)'};
+    const prog={SETUP:this._holdCount/20,READY:1,FLIGHT:1,DONE:1}[s]||0;
+    const metrics=[];
+    if(s==='SETUP'){ metrics.push({label:'HOLD',value:this._holdCount,unit:'frames'}); }
+    if(s==='FLIGHT' && this._liftoff){
+      const f=this._frameCount-this._liftoff;
+      metrics.push({label:'VUELO',value:(f/this.fps).toFixed(2),unit:'s'});
+    }
+    if(s==='DONE' && this.result){
+      metrics.push({label:'ALTURA',value:this.result.mainValue,unit:'cm'});
+    }
+    return {state:msgs[s]||s, color:cols[s]||'var(--white)', progress:prog, metrics};
+  }
+}
+
+/* ── CMJ ── */
+class CMJAnalyzer extends BaseAnalyzer {
+  constructor(t){ super(t);
+    this._hipBase=null; this._hipBuf=[];
+    this._hipMin=null; this._liftoff=null; this._landing=null;
+  }
+  tick(lms,fps){
+    super.tick(lms,fps);
+    const ay=this._avgAnkleY(lms);
+    const hy=this._midY(lms,LM.L_HIP,LM.R_HIP);
+    this._calibrateBaseline(ay,30);
+    if(this._hipBase===null && hy) { this._hipBuf.push(hy); if(this._hipBuf.length>=30) this._hipBase=this._hipBuf.reduce((a,b)=>a+b)/this._hipBuf.length; }
+    this.ankleYHist.push(ay??NaN);
+
+    if(this.state==='INIT' && this.baseline!==null && this._hipBase!==null) this.state='STAND';
+
+    if(this.state==='STAND' && hy!==null && this._hipBase!==null){
+      const drop=hy-this._hipBase;
+      if(drop>0.025){ this._hipMin=hy; this.state='ECCENTRIC'; }
+    }
+    if(this.state==='ECCENTRIC'){
+      if(hy) this._hipMin=Math.max(this._hipMin||0,hy);
+      if(ay!==null && this.baseline!==null && (this.baseline-ay)>this.threshold){
+        this._liftoff=this._frameCount; this.state='FLIGHT';
+      }
+    }
+    if(this.state==='FLIGHT'){
+      if(ay!==null && this.baseline!==null && (this.baseline-ay)<0.015){
+        const ff=this._frameCount-this._liftoff;
+        if(ff>=5){
+          this._landing=this._frameCount;
+          const hm=this._height_m(ff);
+          const dep=Math.max(0,(this._hipMin||this._hipBase)-this._hipBase);
+          this.result={ test:'cmj', mainValue:(hm*100).toFixed(1), mainUnit:'cm',
+            details:{'Tiempo vuelo':((ff/fps).toFixed(3)+'s'),
+                     'Potencia':(this._power_w(hm).toFixed(0)+' W'),
+                     'Prof. contramov.':(dep*100).toFixed(1)+'%' }};
+          this.state='DONE';
+        } else { this.state='ECCENTRIC'; this._liftoff=null; }
+      }
+    }
+  }
+  getHUD(){
+    const msgs={INIT:'Calibrando…',STAND:'Parado — prepará el salto',
+                ECCENTRIC:'↓ Contramovimiento detectado',FLIGHT:'✈ En vuelo…',DONE:'✓ CMJ detectado'};
+    const cols={STAND:'var(--white)',ECCENTRIC:'var(--yellow)',FLIGHT:'var(--cyan)',DONE:'var(--green)'};
+    const metrics=[];
+    if(this.state==='FLIGHT' && this._liftoff){
+      const f=this._frameCount-this._liftoff;
+      metrics.push({label:'VUELO',value:(f/this.fps).toFixed(2),unit:'s'});
+    }
+    if(this.state==='DONE' && this.result)
+      metrics.push({label:'ALTURA',value:this.result.mainValue,unit:'cm'});
+    return {state:msgs[this.state]||this.state,color:cols[this.state]||'var(--white)',progress:this.state==='DONE'?1:this.state==='FLIGHT'?0.7:0.3,metrics};
+  }
+}
+
+/* ── ABALAKOV ── */
+class AbalakovAnalyzer extends CMJAnalyzer {
+  constructor(t){ super(t); this._wristBuf=[]; }
+  tick(lms,fps){
+    super.tick(lms,fps);
+    // Track wrists during concentric+flight
+    if(['ECCENTRIC','FLIGHT'].includes(this.state)){
+      const ws=[];
+      [LM.L_WRIST,LM.R_WRIST].forEach(i=>{ if(lms[i].visibility>0.25) ws.push(lms[i].y); });
+      if(ws.length) this._wristBuf.push(ws.reduce((a,b)=>a+b)/ws.length);
+    }
+    // Override result to add arm swing
+    if(this.state==='DONE' && this.result && this._wristBuf.length && !this.result.details['Brazos']){
+      const swing=Math.max(...this._wristBuf)-Math.min(...this._wristBuf);
+      const contrib=Math.min(swing*100*1.5,20).toFixed(0);
+      this.result.test='abalakov';
+      this.result.details['Brazos']=(swing*100).toFixed(1)+'% swing';
+      this.result.details['Aporte brazos']='≈'+contrib+'%';
+    }
+  }
+  getHUD(){
+    const h=super.getHUD();
+    if(this._wristBuf.length){
+      const swing=Math.max(...this._wristBuf)-Math.min(...this._wristBuf);
+      h.metrics.push({label:'SWING',value:(swing*100).toFixed(1),unit:'%'});
+    }
+    return h;
+  }
+}
+
+/* ── DROP JUMP / RSI ── */
+class DropJumpAnalyzer extends BaseAnalyzer {
+  constructor(t){ super(t);
+    this._boxBase=null; this._boxBuf=[];
+    this._floorBase=null; this._floorBuf=[];
+    this._contactStart=null; this._liftoff=null; this._landing=null;
+  }
+  tick(lms,fps){
+    super.tick(lms,fps);
+    const ay=this._avgAnkleY(lms);
+    this.ankleYHist.push(ay??NaN);
+
+    if(this.state==='INIT'){
+      if(ay!==null){ this._boxBuf.push(ay); if(this._boxBuf.length>=25){ this._boxBase=this._boxBuf.reduce((a,b)=>a+b)/this._boxBuf.length; this.state='ON_BOX'; } }
+    }
+    if(this.state==='ON_BOX' && ay!==null && this._boxBase!==null){
+      if(ay-this._boxBase>0.08) this.state='FALLING';
+    }
+    if(this.state==='FALLING'){
+      if(ay!==null){ this._floorBuf.push(ay); if(this._floorBuf.length>=20){ this._floorBase=this._floorBuf.reduce((a,b)=>a+b)/this._floorBuf.length; this._contactStart=this._frameCount-20; this.state='CONTACT'; } }
+    }
+    if(this.state==='CONTACT'){
+      if(ay!==null && this._floorBase!==null && (this._floorBase-ay)>this.threshold){
+        const cf=this._frameCount-this._contactStart;
+        if(cf>=3){ this._liftoff=this._frameCount; this.state='FLIGHT'; }
+      }
+    }
+    if(this.state==='FLIGHT'){
+      if(ay!==null && this._floorBase!==null && (this._floorBase-ay)<0.015){
+        const ff=this._frameCount-this._liftoff;
+        const cf=this._liftoff-this._contactStart;
+        if(ff>=4){
+          this._landing=this._frameCount;
+          const hm=this._height_m(ff);
+          const tc=cf/fps;
+          const rsi=hm/tc;
+          let cat='Por mejorar';
+          if(rsi>=2.5)cat='Excelente'; else if(rsi>=1.5)cat='Muy bueno'; else if(rsi>=1.0)cat='Bueno'; else if(rsi>=0.5)cat='Regular';
+          this.result={ test:'dropjump', mainValue:rsi.toFixed(3), mainUnit:'RSI (m/s)',
+            details:{'Altura':(hm*100).toFixed(1)+' cm','T. contacto':(tc.toFixed(3)+'s'),'T. vuelo':((ff/fps).toFixed(3)+'s'),'Clasificación':cat }};
+          this.state='DONE';
+        } else { this.state='CONTACT'; this._liftoff=null; }
+      }
+    }
+  }
+  getHUD(){
+    const msgs={INIT:'Parado sobre la caja…',ON_BOX:'ON BOX — Caé cuando estés listo',
+                FALLING:'↓ Cayendo…',CONTACT:'CONTACTO — ¡Saltar rápido!',
+                FLIGHT:'✈ Vuelo RSI…',DONE:'✓ Drop Jump detectado'};
+    const cols={ON_BOX:'var(--blue)',CONTACT:'var(--red)',FLIGHT:'var(--cyan)',DONE:'var(--green)'};
+    const metrics=[];
+    if(this.state==='CONTACT' && this._contactStart){
+      metrics.push({label:'CONTACTO',value:((this._frameCount-this._contactStart)/this.fps).toFixed(2),unit:'s'});
+    }
+    if(this.state==='DONE' && this.result){
+      metrics.push({label:'RSI',value:this.result.mainValue,unit:''});
+    }
+    return {state:msgs[this.state]||this.state,color:cols[this.state]||'var(--white)',progress:this.state==='DONE'?1:this.state==='FLIGHT'?0.8:0.4,metrics};
+  }
+}
+
+/* ── DISTANCE ── */
+class DistanceAnalyzer extends BaseAnalyzer {
+  constructor(t,calibPxPerM){ super(t);
+    this.pxPerM=calibPxPerM||100;
+    this._takeoffX=null; this._lastX=null; this._liftoff=null; this._landing=null;
+    this._canvasW=1; this._canvasH=1;
+  }
+  setCanvas(w,h){ this._canvasW=w; this._canvasH=h; }
+  tick(lms,fps){
+    super.tick(lms,fps);
+    const ay=this._avgAnkleY(lms);
+    this._calibrateBaseline(ay,30);
+    this.ankleYHist.push(ay??NaN);
+
+    // Average ankle X in canvas pixels
+    const xs=[];
+    [LM.L_ANKLE,LM.R_ANKLE].forEach(i=>{ if(lms[i].visibility>0.3) xs.push(lms[i].x*this._canvasW); });
+    const ax=xs.length?xs.reduce((a,b)=>a+b)/xs.length:null;
+    if(ax!==null) this._lastX=ax;
+
+    if(this.state==='INIT' && this.baseline!==null) this.state='STAND';
+
+    if(this.state==='STAND'){
+      if(ay!==null && this.baseline!==null && (this.baseline-ay)>this.threshold){
+        this._takeoffX=this._lastX; this._liftoff=this._frameCount; this.state='FLIGHT';
+      }
+    }
+    if(this.state==='FLIGHT'){
+      if(ay!==null && this.baseline!==null && (this.baseline-ay)<0.02){
+        const ff=this._frameCount-this._liftoff;
+        if(ff>=4){
+          this._landing=this._frameCount;
+          const landX=this._lastX??this._takeoffX;
+          const hm=this._height_m(ff);
+          const distM=Math.abs(landX-this._takeoffX)/this.pxPerM;
+          this.result={ test:'distance', mainValue:(distM*100).toFixed(1), mainUnit:'cm',
+            details:{'Distancia':(distM*100).toFixed(1)+' cm','Altura vuelo':(hm*100).toFixed(1)+' cm','T. vuelo':((ff/fps).toFixed(3)+'s'),'Calibración':(this.pxPerM.toFixed(0)+' px/m') }};
+          this.state='DONE';
+        } else { this.state='STAND'; this._liftoff=null; }
+      }
+    }
+  }
+  getHUD(){
+    const msgs={INIT:'Calibrando…',STAND:'STAND — Prepará el salto',FLIGHT:'✈ Volando…',DONE:'✓ Distancia medida'};
+    const cols={STAND:'var(--white)',FLIGHT:'var(--cyan)',DONE:'var(--green)'};
+    const metrics=[];
+    if(this.state==='DONE' && this.result)
+      metrics.push({label:'DIST',value:this.result.mainValue,unit:'cm'});
+    return {state:msgs[this.state]||this.state,color:cols[this.state]||'var(--white)',progress:this.state==='DONE'?1:0.3,metrics};
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CANVAS DRAWING
+═══════════════════════════════════════════════════════════════════ */
+const Draw = {
+  skeleton(ctx, lms, W, H){
+    if(!lms) return;
+    // Connections
+    const conns=[
+      [LM.L_SHOULDER,LM.R_SHOULDER],[LM.L_HIP,LM.R_HIP],
+      [LM.L_SHOULDER,LM.L_HIP],[LM.R_SHOULDER,LM.R_HIP],
+      [LM.L_SHOULDER,LM.L_ELBOW],[LM.L_ELBOW,LM.L_WRIST],
+      [LM.R_SHOULDER,LM.R_ELBOW],[LM.R_ELBOW,LM.R_WRIST],
+      [LM.L_HIP,LM.L_KNEE],[LM.L_KNEE,LM.L_ANKLE],
+      [LM.R_HIP,LM.R_KNEE],[LM.R_KNEE,LM.R_ANKLE],
+      [LM.L_ANKLE,LM.L_HEEL],[LM.R_ANKLE,LM.R_HEEL],
+    ];
+    ctx.strokeStyle='rgba(0,200,255,0.7)'; ctx.lineWidth=2;
+    conns.forEach(([a,b])=>{
+      if(lms[a].visibility<0.3||lms[b].visibility<0.3) return;
+      ctx.beginPath();
+      ctx.moveTo(lms[a].x*W, lms[a].y*H);
+      ctx.lineTo(lms[b].x*W, lms[b].y*H);
+      ctx.stroke();
+    });
+    // Joints
+    [LM.L_KNEE,LM.R_KNEE,LM.L_HIP,LM.R_HIP,LM.L_ANKLE,LM.R_ANKLE,
+     LM.L_WRIST,LM.R_WRIST].forEach(i=>{
+      if(lms[i].visibility<0.3) return;
+      ctx.fillStyle='rgba(0,255,200,0.9)';
+      ctx.beginPath();
+      ctx.arc(lms[i].x*W, lms[i].y*H, 4, 0, Math.PI*2);
+      ctx.fill();
+    });
+  },
+
+  baseline(ctx, y_norm, W, H, color='rgba(0,255,136,0.6)', label='baseline'){
+    const y=y_norm*H;
+    ctx.strokeStyle=color; ctx.lineWidth=1; ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=color; ctx.font='11px JetBrains Mono,monospace';
+    ctx.fillText(label, 8, y-5);
+  },
+
+  kneeAngle(ctx, lms, W, H){
+    const sides=[[LM.L_HIP,LM.L_KNEE,LM.L_ANKLE],[LM.R_HIP,LM.R_KNEE,LM.R_ANKLE]];
+    sides.forEach(([h,k,a])=>{
+      if(lms[h].visibility<0.3||lms[k].visibility<0.3||lms[a].visibility<0.3) return;
+      const ang=angle3({x:lms[h].x,y:lms[h].y},{x:lms[k].x,y:lms[k].y},{x:lms[a].x,y:lms[a].y});
+      const kx=lms[k].x*W, ky=lms[k].y*H;
+      ctx.fillStyle='rgba(255,224,64,0.9)'; ctx.font='bold 14px JetBrains Mono,monospace';
+      ctx.fillText(ang.toFixed(0)+'°', kx+8, ky-6);
+    });
+  },
+
+  wristTrail(ctx, lms, W, H){
+    [LM.L_WRIST,LM.R_WRIST].forEach(i=>{
+      if(lms[i].visibility<0.25) return;
+      ctx.fillStyle='rgba(255,140,0,0.9)';
+      ctx.beginPath(); ctx.arc(lms[i].x*W,lms[i].y*H,7,0,Math.PI*2); ctx.fill();
+    });
+  },
+
+  distanceLine(ctx, x0, x1, y, W, H){
+    ctx.strokeStyle='var(--cyan)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
+    // Arrows
+    [x0,x1].forEach((x,i)=>{
+      const dir=i===0?1:-1;
+      ctx.beginPath();
+      ctx.moveTo(x,y); ctx.lineTo(x+dir*12,y-6); ctx.lineTo(x+dir*12,y+6); ctx.closePath();
+      ctx.fillStyle='var(--cyan)'; ctx.fill();
+    });
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   CALIBRATION (Distance test)
+═══════════════════════════════════════════════════════════════════ */
+const CalibUI = {
+  pts: [],
+  pxPerM: null,
+  _snapFrame: null,
+  _refLen: 1.0,
+  _resolveFn: null,
+
+  start(videoEl, canvasEl, refLen){
+    this.pts=[]; this.pxPerM=null;
+    this._refLen=refLen;
+    const calibCanvas=$('calib-canvas');
+    const overlay=$('calib-overlay');
+
+    // Snap current frame
+    const snap=document.createElement('canvas');
+    snap.width=videoEl.videoWidth; snap.height=videoEl.videoHeight;
+    snap.getContext('2d').drawImage(videoEl,0,0);
+    this._snapFrame=snap;
+
+    // Scale calib-canvas to fit
+    const maxW=window.innerWidth-60, maxH=window.innerHeight*0.5;
+    const scale=Math.min(maxW/snap.width, maxH/snap.height);
+    calibCanvas.width=snap.width*scale; calibCanvas.height=snap.height*scale;
+    calibCanvas.style.width=calibCanvas.width+'px';
+    calibCanvas.style.height=calibCanvas.height+'px';
+
+    const ctx=calibCanvas.getContext('2d');
+    ctx.drawImage(snap,0,0,calibCanvas.width,calibCanvas.height);
+    overlay.classList.add('show');
+
+    const tap=(e)=>{
+      e.preventDefault();
+      const rect=calibCanvas.getBoundingClientRect();
+      const t=e.touches?e.touches[0]:e;
+      const x=(t.clientX-rect.left)*(calibCanvas.width/rect.width);
+      const y=(t.clientY-rect.top)*(calibCanvas.height/rect.height);
+      this.pts.push({x,y});
+      ctx.fillStyle='#ff3b5c'; ctx.beginPath(); ctx.arc(x,y,8,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='bold 14px JetBrains Mono,monospace';
+      ctx.fillText(this.pts.length===1?'A':'B', x+12, y-4);
+      if(this.pts.length===2){
+        ctx.strokeStyle='#ff3b5c'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(this.pts[0].x,this.pts[0].y); ctx.lineTo(this.pts[1].x,this.pts[1].y); ctx.stroke();
+        const dpx=distPx(this.pts[0],this.pts[1])*(snap.width/calibCanvas.width);
+        this.pxPerM=dpx/this._refLen;
+        $('calib-inst').textContent=`✓ ${dpx.toFixed(0)}px = ${this._refLen}m → ${this.pxPerM.toFixed(0)} px/m`;
+        calibCanvas.removeEventListener('touchstart',tap);
+        calibCanvas.removeEventListener('click',tap);
+      }
+    };
+    calibCanvas.addEventListener('touchstart',tap,{passive:false});
+    calibCanvas.addEventListener('click',tap);
+
+    return new Promise(resolve=>{ this._resolveFn=resolve; });
+  },
+
+  confirm(){
+    $('calib-overlay').classList.remove('show');
+    this._resolveFn?.(this.pxPerM||100);
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAIN APP
+═══════════════════════════════════════════════════════════════════ */
+const App = {
+  _currentPage: 'home',
+  _currentTest: null,
+  _analyzer: null,
+  _raf: null,
+  _fps: 30,
+  _lastFrameTime: performance.now(),
+  _pendingResult: null,
+  _histFilter: 'all',
+
+  /* ── Init ── */
+  async init(){
+    // Load athlete profile first
+    Athletes.loadMe();
+
+    // Load MediaPipe
+    try {
+      await PoseEngine.init(msg=>{ $('loader-status').textContent=msg; });
+    } catch(e){
+      $('loader-status').textContent='Error: '+e.message;
+      return;
+    }
+
+    // Hide loader
+    $('mp-loader').style.display='none';
+
+    // First time? Show onboarding
+    if(!Athletes.isRegistered()){
+      Onboarding.show();
+      return; // App continues in onAthleteRegistered()
+    }
+
+    this._launchApp();
+  },
+
+  onAthleteRegistered(){
+    // Called after onboarding completes
+    this._launchApp();
+  },
+
+  _launchApp(){
+    // Init collab (shares athlete profile with peers)
+    Collab.init();
+    Collab.onResult(data=>{ this._onRemoteResult(data); });
+
+    // Load settings UI
+    this._loadSettingsUI();
+
+    // Init Google Sheets sync
+    SheetsSync.load();
+
+    // Send athlete profile to Sheets (if configured)
+    const me = Athletes.getMe();
+    if(me) SheetsSync.sendAthlete(me);
+
+    // Heartbeat
+    setInterval(()=>Collab._announce(), 10000);
+
+    // Show app
+    $('app').style.display='flex';
+
+    this._refreshProfileCard();
+    this.updateCollabUI();
+    this.renderHistory();
+  },
+
+  _refreshProfileCard(){
+    const me = Athletes.getMe();
+    if(!me) return;
+    const initials = me.fullname.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const meta = Athletes.CAT_META[me.category] || {};
+    $('pc-avatar').textContent = initials;
+    $('pc-name').textContent = me.fullname;
+    $('pc-meta').textContent = `${me.age} años · ${me.weight}kg · ${me.height}cm`;
+    $('pc-folder-name').textContent = me.category;
+    $('pc-folder-badge').style.color = meta.color || '#7CFC00';
+    $('pc-folder-badge').style.borderColor = (meta.color||'#7CFC00').replace(')',', .3)').replace('rgb','rgba') ;
+  },
+
+  /* ── Navigation ── */
+  goPage(name){
+    // Stop camera if leaving capture
+    if(this._currentPage==='capture' && name!=='capture'){
+      this._stopCapture();
+    }
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const pg=$('page-'+name);
+    if(pg){ pg.classList.add('active'); this._currentPage=name; }
+    const ni=document.querySelector(`.nav-item[onclick*="'${name}'"]`);
+    if(ni) ni.classList.add('active');
+
+    if(name==='history') this.renderHistory();
+    if(name==='session') this.renderSession();
+    if(name==='folders') Folders.showList();
+  },
+
+  /* ── Capture ── */
+  async startCapture(testType){
+    this._currentTest=testType;
+    this.goPage('capture');
+
+    // Hide error screen, show video elements
+    $('camera-error').classList.remove('show');
+    $('input-video').style.display='block';
+    $('output-canvas').style.display='block';
+    $('hud').style.display='block';
+
+    $('hud-test-name').textContent = {
+      sj:'SQUAT JUMP',cmj:'CMJ',abalakov:'ABALAKOV',dropjump:'DROP JUMP',distance:'SALTO DISTANCIA'
+    }[testType];
+    $('hud-state').textContent = 'Solicitando cámara…';
+    $('result-overlay').classList.remove('show');
+
+    // ── Pre-check: HTTPS + permission ────────────────────────────
+    const check = await PoseEngine.checkPermission();
+    if(!check.ok){
+      this._showCameraError(check.reason, check.message);
+      return;
+    }
+
+    const vid=$('input-video'), can=$('output-canvas');
+    const ctx=can.getContext('2d');
+
+    // For distance: run calibration first
+    let pxPerM=null;
+
+    try {
+      await PoseEngine.startCamera(vid, can, async (results)=>{
+        // First frame for distance calibration
+        if(testType==='distance' && pxPerM===null){
+          pxPerM = await CalibUI.start(vid, can, parseFloat(Settings.get('calibLength')));
+          this._analyzer = new DistanceAnalyzer(parseFloat(Settings.get('threshold')), pxPerM);
+          this._analyzer.setCanvas(can.width||vid.videoWidth, can.height||vid.videoHeight);
+        }
+
+        if(!this._analyzer && testType!=='distance'){
+          const t=parseFloat(Settings.get('threshold'));
+          if(testType==='sj') this._analyzer=new SJAnalyzer(t);
+          else if(testType==='cmj') this._analyzer=new CMJAnalyzer(t);
+          else if(testType==='abalakov') this._analyzer=new AbalakovAnalyzer(t);
+          else if(testType==='dropjump') this._analyzer=new DropJumpAnalyzer(t);
+        }
+
+        if(!this._analyzer) return;
+
+        // Compute FPS
+        const now=performance.now();
+        this._fps=lerp(this._fps, 1000/(now-this._lastFrameTime), 0.1);
+        this._lastFrameTime=now;
+
+        // Resize canvas
+        if(can.width!==vid.videoWidth && vid.videoWidth) { can.width=vid.videoWidth; can.height=vid.videoHeight; }
+        const W=can.width, H=can.height;
+        ctx.clearRect(0,0,W,H);
+
+        const lms=results?.poseLandmarks;
+
+        // Draw skeleton
+        if(lms) Draw.skeleton(ctx,lms,W,H);
+
+        // Test-specific overlays
+        if(lms && testType==='sj'){
+          Draw.kneeAngle(ctx,lms,W,H);
+          if(this._analyzer.baseline) Draw.baseline(ctx,this._analyzer.baseline,W,H);
+        }
+        if(lms && testType==='cmj' && this._analyzer.baseline){
+          Draw.baseline(ctx,this._analyzer.baseline,W,H,'rgba(0,255,136,0.5)','tobillo');
+          if(this._analyzer._hipBase) Draw.baseline(ctx,this._analyzer._hipBase,W,H,'rgba(220,80,220,0.5)','cadera');
+        }
+        if(lms && testType==='abalakov'){
+          if(this._analyzer.baseline) Draw.baseline(ctx,this._analyzer.baseline,W,H);
+          Draw.wristTrail(ctx,lms,W,H);
+        }
+        if(lms && testType==='dropjump'){
+          if(this._analyzer._floorBase) Draw.baseline(ctx,this._analyzer._floorBase,W,H,'rgba(0,255,136,0.5)','suelo');
+          if(this._analyzer._boxBase) Draw.baseline(ctx,this._analyzer._boxBase,W,H,'rgba(50,120,255,0.5)','caja');
+        }
+        if(lms && testType==='distance'){
+          if(this._analyzer.baseline) Draw.baseline(ctx,this._analyzer.baseline,W,H);
+          if(this._analyzer._takeoffX && this._analyzer._lastX && this._analyzer.state==='DONE'){
+            const y=this._analyzer.baseline?this._analyzer.baseline*H:H*0.8;
+            Draw.distanceLine(ctx,this._analyzer._takeoffX,this._analyzer._lastX,y,W,H);
+          }
+        }
+
+        // Tick analyzer
+        if(lms) this._analyzer.tick(lms, this._fps);
+
+        // Update HUD
+        const hud=this._analyzer?.getHUD()||{state:'—',color:'white',progress:0,metrics:[]};
+        $('hud-state').textContent=hud.state;
+        $('hud-state').style.color=hud.color;
+        $('hud-progress-fill').style.width=(hud.progress*100)+'%';
+        $('hud-metrics').innerHTML=hud.metrics.map(m=>`
+          <div class="hud-metric">
+            <div class="m-label">${m.label}</div>
+            <div class="m-value">${m.value}<span class="m-unit"> ${m.unit}</span></div>
+          </div>`).join('');
+
+        // Check for result
+        if(this._analyzer?.result && this._analyzer.state==='DONE' && !this._pendingResult){
+          this._pendingResult=this._analyzer.result;
+          this._showResult(this._pendingResult);
+        }
+      });
+    } catch(e) {
+      this._showCameraError(
+        e.name === 'NotAllowedError'  ? 'denied'      :
+        e.name === 'NotFoundError'    ? 'notfound'    :
+        location.protocol !== 'https:' ? 'https'      : 'unknown',
+        e.message
+      );
+    }
+  },
+
+  _showCameraError(reason, message=''){
+    // Hide camera UI
+    $('input-video').style.display='none';
+    $('output-canvas').style.display='none';
+    $('hud').style.display='none';
+
+    // Show error screen
+    const el = $('camera-error');
+    const msg = $('camera-error-msg');
+    el.classList.add('show');
+
+    const texts = {
+      https:     'Safari en iPhone solo permite la cámara desde páginas HTTPS.<br>Publicá la app en Netlify (gratis) para activarla.',
+      denied:    'Bloqueaste el acceso a la cámara.<br>Andá a <strong>Ajustes → Safari → Cámara</strong> y cambialo a "Permitir".',
+      notfound:  'No se encontró ninguna cámara en este dispositivo.',
+      unsupported:'Tu navegador no soporta acceso a la cámara. Usá Safari en iOS.',
+      unknown:   `Error de cámara: ${message || 'desconocido'}`,
+    };
+    msg.innerHTML = texts[reason] || texts.unknown;
+
+    // Show/hide the steps based on reason
+    const steps = el.querySelector('.ce-steps');
+    if(steps) steps.style.display = reason === 'https' ? 'block' : 'none';
+  },
+
+  async retryCameraAccess(){
+    $('camera-error').classList.remove('show');
+    await this.startCapture(this._currentTest);
+  },
+
+  copyNetlifyUrl(){
+    const url = $('netlify-url-display')?.textContent;
+    if(url && url !== 'Tocá para copiar la URL'){
+      navigator.clipboard?.writeText(url);
+      this.toast('URL copiada');
+    }
+  },
+
+  _stopCapture(){
+    PoseEngine.stopCamera();
+    this._analyzer=null;
+    this._pendingResult=null;
+    $('result-overlay').classList.remove('show');
+    $('calib-overlay').classList.remove('show');
+  },
+
+  resetCapture(){
+    this._analyzer=null;
+    this._pendingResult=null;
+    $('result-overlay').classList.remove('show');
+    this.startCapture(this._currentTest);
+  },
+
+  /* ── Result display ── */
+  _showResult(r){
+    const colors={sj:'var(--cyan)',cmj:'var(--cyan2)',abalakov:'var(--yellow)',dropjump:'var(--orange)',distance:'var(--red)'};
+    $('res-test-name').textContent={sj:'SQUAT JUMP',cmj:'CMJ',abalakov:'ABALAKOV',dropjump:'DROP JUMP',distance:'DISTANCIA'}[r.test]||r.test.toUpperCase();
+    $('res-main-value').textContent=r.mainValue;
+    $('res-main-value').style.color=colors[r.test]||'var(--cyan)';
+    $('res-main-unit').textContent=r.mainUnit;
+    $('result-details').innerHTML=Object.entries(r.details||{}).map(([k,v])=>`
+      <div class="res-detail">
+        <div class="rd-label">${k}</div>
+        <div class="rd-value" style="color:${colors[r.test]||'var(--cyan)'}">${v}</div>
+      </div>`).join('');
+    $('result-overlay').classList.add('show');
+  },
+
+  saveResult(){
+    if(!this._pendingResult) return;
+    const me = Athletes.getMe();
+    const enriched = {
+      ...this._pendingResult,
+      athleteId:       me?.deviceId   || null,
+      athleteName:     me?.fullname   || Settings.get('name'),
+      athleteCategory: me?.category   || null,
+    };
+    const saved=History.save(enriched);
+    Collab.broadcastResult(enriched);
+    this._addLiveFeed(Settings.get('name'), enriched, true);
+
+    // Auto-sync to Google Sheets if enabled
+    if(SheetsSync.isConfigured() && Settings.get('autosync') !== false){
+      SheetsSync.sendResult(enriched);
+    }
+
+    this.toast('✓ Guardado');
+    $('result-overlay').classList.remove('show');
+    this._pendingResult=null;
+  },
+
+  /* ── History ── */
+  renderHistory(){
+    const filter=this._histFilter||'all';
+    const entries=History.getAll(filter);
+    const list=$('history-list');
+    const icons={sj:'⬆',cmj:'↕',abalakov:'🤸',dropjump:'⚡',distance:'📏'};
+    const colors={sj:'var(--cyan)',cmj:'var(--cyan2)',abalakov:'var(--yellow)',dropjump:'var(--orange)',distance:'var(--red)'};
+    const names={sj:'Squat Jump',cmj:'CMJ',abalakov:'Abalakov',dropjump:'Drop Jump',distance:'Distancia'};
+
+    if(!entries.length){
+      list.innerHTML=`<div class="empty-state"><div class="es-icon">📊</div>Sin registros aún.<br>Realizá tu primer test.</div>`;
+      return;
+    }
+    list.innerHTML=entries.map(e=>`
+      <div class="history-item">
+        <div class="hi-icon" style="background:${colors[e.test]||'var(--cyan)'}20">${icons[e.test]||'↑'}</div>
+        <div class="hi-info">
+          <div class="hi-test">${names[e.test]||e.test}</div>
+          <div class="hi-meta">${new Date(e.ts).toLocaleDateString('es')} · ${new Date(e.ts).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <div class="hi-result">
+          <div class="hi-main" style="color:${colors[e.test]||'var(--cyan)'}">${e.mainValue}</div>
+          <div class="hi-unit">${e.mainUnit}</div>
+        </div>
+      </div>`).join('');
+  },
+
+  filterHistory(f, el){
+    this._histFilter=f;
+    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+    this.renderHistory();
+  },
+
+  /* ── Collab UI ── */
+  updateCollabUI(){
+    const code=Collab.sessionCode;
+    $('session-code-display').textContent=code;
+    $('home-session-code').textContent=code;
+    const peers=Collab.getPeerList();
+    const cnt=peers.length;
+    $('peer-count').textContent=cnt>0?`+${cnt} en sesión`:'';
+    $('session-subtitle').textContent=`// sesión: ${code} · ${cnt} participante${cnt!==1?'s':''}`;
+  },
+
+  renderSession(){
+    this.updateCollabUI();
+    const peers=Collab.getPeerList();
+    const avatarColors=['#00c8ff','#00ffcc','#ffe040','#ff8c00','#ff3b5c','#c084fc'];
+    const peerHTML=[
+      `<div class="peer-item">
+        <div class="peer-avatar" style="background:${avatarColors[0]}20;color:${avatarColors[0]}">${(Settings.get('name')||'Yo')[0].toUpperCase()}</div>
+        <div><div class="peer-name">${Settings.get('name')||'Tú'}</div><div class="peer-status">Tú</div></div>
+        <div class="peer-badge"><span class="badge badge-you">Tú</span></div>
+      </div>`,
+      ...peers.map((p,i)=>`
+      <div class="peer-item">
+        <div class="peer-avatar" style="background:${avatarColors[(i+1)%avatarColors.length]}20;color:${avatarColors[(i+1)%avatarColors.length]}">${p.name[0].toUpperCase()}</div>
+        <div><div class="peer-name">${p.name}</div><div class="peer-status">En línea</div></div>
+        <div class="peer-badge"><span class="badge badge-active">●</span></div>
+      </div>`)
+    ].join('');
+    $('peer-list').innerHTML=peerHTML||'<div style="color:var(--muted);font-size:12px;font-family:var(--font-mono);padding:10px">Sin otros participantes</div>';
+  },
+
+  _onRemoteResult(data){
+    this._addLiveFeed(data.name||'Atleta', data.result, false);
+  },
+
+  _addLiveFeed(name, result, isMe){
+    const colors={sj:'var(--cyan)',cmj:'var(--cyan2)',abalakov:'var(--yellow)',dropjump:'var(--orange)',distance:'var(--red)'};
+    const names={sj:'SJ',cmj:'CMJ',abalakov:'Abalakov',dropjump:'RSI',distance:'Distancia'};
+    const feed=$('live-feed');
+    const div=document.createElement('div');
+    div.className='live-entry';
+    div.innerHTML=`
+      <div class="live-dot" style="background:${colors[result.test]||'var(--cyan)'}"></div>
+      <div class="live-text">${isMe?'Tú':name} · ${names[result.test]||result.test}</div>
+      <div class="live-val">${result.mainValue} ${result.mainUnit}</div>`;
+    feed.insertBefore(div, feed.firstChild);
+    // Keep max 20
+    while(feed.children.length>20) feed.removeChild(feed.lastChild);
+  },
+
+  /* ── Session management ── */
+  shareSession(){
+    const url=`${location.origin}${location.pathname}?s=${Collab.sessionCode}`;
+    if(navigator.share){
+      navigator.share({ title:'Heat & Lift Training', text:`Únete a mi sesión: ${Collab.sessionCode}`, url }).catch(()=>{});
+    } else {
+      navigator.clipboard.writeText(Collab.sessionCode).then(()=>this.toast('Código copiado: '+Collab.sessionCode));
+    }
+  },
+
+  showJoinModal(){
+    $('modal-title').textContent='Unirse a sesión';
+    $('modal-body').innerHTML=`
+      <p style="font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-bottom:14px">Ingresá el código de 6 caracteres</p>
+      <input id="join-code-input" class="join-input" type="text" maxlength="6" placeholder="ABCD12" autocomplete="off" autocapitalize="characters">
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="App.joinSession()">Unirse</button>
+      </div>`;
+    $('modal-overlay').classList.add('show');
+    setTimeout(()=>$('join-code-input')?.focus(), 300);
+  },
+
+  joinSession(){
+    const code=$('join-code-input')?.value?.trim().toUpperCase();
+    if(!code||code.length<4){ this.toast('Código inválido'); return; }
+    Collab.join(code);
+    this.closeModal();
+    this.toast('✓ Sesión '+code+' unida');
+    this.renderSession();
+  },
+
+  newSession(){
+    Collab.newSession();
+    this.toast('Nueva sesión: '+Collab.sessionCode);
+    this.renderSession();
+  },
+
+  closeModal(){
+    $('modal-overlay').classList.remove('show');
+  },
+
+  /* ── Camera ── */
+  flipCamera(){
+    PoseEngine.flipCamera();
+    this.toast('Cámara girada');
+  },
+
+  /* ── Calibration confirm ── */
+  confirmCalibration(){
+    CalibUI.confirm();
+  },
+
+  /* ── Settings ── */
+  saveSetting(key, value){
+    Settings.set(key, value);
+    if(key==='name') Collab.myName=value;
+  },
+
+  _loadSettingsUI(){
+    const me = Athletes.getMe();
+    if(me){
+      const el = $('sett-display-name'); if(el) el.textContent = me.fullname;
+      const em = $('sett-display-meta'); if(em) em.textContent = `${me.category} · ${me.age} años · ${me.height}cm`;
+    }
+    $('sett-weight').value   = Settings.get('weight');
+    $('sett-rear').checked   = Settings.get('rear');
+    $('sett-complexity').value = String(Settings.get('complexity'));
+    $('sett-threshold').value  = String(Settings.get('threshold'));
+    $('sett-calib').value    = Settings.get('calibLength');
+
+    // Sheets sync
+    const urlInput = $('sett-script-url');
+    if(urlInput) urlInput.value = localStorage.getItem('hl_script_url') || '';
+    const autoSync = $('sett-autosync');
+    if(autoSync) autoSync.checked = Settings.get('autosync') !== false;
+    // Update badge state
+    const hasUrl = !!localStorage.getItem('hl_script_url');
+    const badge = $('sheets-sync-badge');
+    if(badge && hasUrl){ badge.className='sync-badge connected'; badge.textContent='● Configurado'; }
+  },
+
+  editProfile(){
+    // Pre-fill onboarding with current data
+    const me = Athletes.getMe();
+    if(me){
+      $('ob-fullname').value = me.fullname;
+      $('ob-category').value = me.category;
+      $('ob-weight').value   = me.weight;
+      $('ob-height').value   = me.height;
+      $('ob-age').value      = me.age;
+    }
+    Onboarding.show();
+  },
+
+  /* ── Export ── */
+  exportXLSX(){
+    if(!window.XLSX){ this.toast('Cargando SheetJS…'); return; }
+    const entries=History._data;
+    if(!entries.length){ this.toast('Sin datos para exportar'); return; }
+
+    const wb=XLSX.utils.book_new();
+    const testNames={sj:'Squat Jump',cmj:'CMJ',abalakov:'Abalakov',dropjump:'Drop Jump',distance:'Distancia'};
+
+    // ── Sheet 1: Todos los registros ──────────────────────────────
+    const rows=History.toRows();
+    const wsAll=XLSX.utils.aoa_to_sheet(rows);
+
+    // Column widths
+    wsAll['!cols']=[
+      {wch:14},{wch:14},{wch:12},{wch:10},{wch:12},{wch:12},
+      {wch:20},{wch:16},{wch:20},{wch:16},{wch:20},{wch:16},{wch:20},{wch:16}
+    ];
+    XLSX.utils.book_append_sheet(wb, wsAll, 'Todos los registros');
+
+    // ── Sheet 2–6: Un sheet por test ──────────────────────────────
+    const tests=['sj','cmj','abalakov','dropjump','distance'];
+    tests.forEach(test=>{
+      const filtered=entries.filter(d=>d.test===test);
+      if(!filtered.length) return;
+      const testRows=filtered.map(d=>{
+        const dt=new Date(d.ts);
+        const row={
+          'Fecha': dt.toLocaleDateString('es-AR'),
+          'Hora':  dt.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+          'Resultado': parseFloat(d.mainValue)||d.mainValue,
+          'Unidad': d.mainUnit,
+        };
+        Object.entries(d.details||{}).forEach(([k,v])=>{ row[k]=v; });
+        return row;
+      });
+      const ws=XLSX.utils.json_to_sheet(testRows);
+      ws['!cols']=[{wch:12},{wch:10},{wch:12},{wch:12},...Object.keys(testRows[0]||{}).slice(4).map(()=>({wch:18}))];
+      XLSX.utils.book_append_sheet(wb, ws, testNames[test]||test);
+    });
+
+    // ── Sheet 7: Resumen estadístico ──────────────────────────────
+    const summaryRows=[
+      ['HEAT & LIFT TRAINING — Resumen de Análisis'],
+      ['Generado:', new Date().toLocaleString('es-AR')],
+      [''],
+      ['Test','N° Registros','Mejor','Promedio','Peor','Unidad'],
+    ];
+    tests.forEach(test=>{
+      const filtered=entries.filter(d=>d.test===test);
+      if(!filtered.length) return;
+      const vals=filtered.map(d=>parseFloat(d.mainValue)).filter(v=>!isNaN(v));
+      if(!vals.length) return;
+      const best=test==='dropjump'?Math.max(...vals):Math.max(...vals);
+      const worst=test==='dropjump'?Math.min(...vals):Math.min(...vals);
+      const avg=vals.reduce((a,b)=>a+b)/vals.length;
+      const unit=filtered[0]?.mainUnit||'';
+      summaryRows.push([testNames[test],vals.length,
+        parseFloat(best.toFixed(2)),parseFloat(avg.toFixed(2)),parseFloat(worst.toFixed(2)),unit]);
+    });
+    const wsSummary=XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols']=[{wch:16},{wch:14},{wch:10},{wch:10},{wch:10},{wch:12}];
+    wsSummary['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}}];
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+
+    // Download
+    const fname=`HeatLift_${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, fname);
+    this.toast('✓ Excel exportado');
+  },
+
+  clearHistory(){
+    if(confirm('¿Eliminar todo el historial?')){ History.clear(); this.renderHistory(); this.toast('Historial eliminado'); }
+  },
+
+  /* ── Toast ── */
+  toast(msg, duration=2200){
+    const t=$('toast');
+    t.textContent=msg; t.classList.add('show');
+    clearTimeout(this._toastTimer);
+    this._toastTimer=setTimeout(()=>t.classList.remove('show'), duration);
+  },
+};
+
+/* ── Check for session in URL ── */
+const urlParams=new URLSearchParams(location.search);
+const urlSession=urlParams.get('s');
+if(urlSession) localStorage.setItem('jl_session', urlSession.toUpperCase());
+
+/* ── Boot ── */
+window.addEventListener('DOMContentLoaded', ()=>App.init());
+</script>
+</body>
+</html>
