@@ -752,6 +752,89 @@ html, body {
   border-radius: 8px; padding: 10px 12px; width: 100%;
   word-break: break-all; text-align: center; cursor: pointer;
 }
+/* ═══════════════════════════════════════════════
+   REC BUTTON + COUNTDOWN
+═══════════════════════════════════════════════ */
+#rec-btn-wrap {
+  position: absolute; bottom: 90px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 20; pointer-events: auto;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+#rec-btn {
+  width: 80px; height: 80px; border-radius: 50%; border: none;
+  background: #ff3b5c; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 6px rgba(255,59,92,.25), 0 0 32px rgba(255,59,92,.4);
+  transition: all .2s; position: relative;
+}
+#rec-btn:active { transform: scale(.92); }
+#rec-btn .rec-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #fff; transition: border-radius .2s;
+}
+#rec-btn.recording .rec-icon {
+  border-radius: 6px; width: 22px; height: 22px;
+}
+#rec-btn.recording {
+  background: rgba(255,59,92,.2);
+  box-shadow: 0 0 0 6px rgba(255,59,92,.15), 0 0 32px rgba(255,59,92,.2);
+  animation: recPulse 1.5s ease-in-out infinite;
+}
+@keyframes recPulse {
+  0%,100% { box-shadow: 0 0 0 6px rgba(255,59,92,.15), 0 0 32px rgba(255,59,92,.2); }
+  50%      { box-shadow: 0 0 0 12px rgba(255,59,92,.05), 0 0 48px rgba(255,59,92,.35); }
+}
+#rec-label {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px;
+  color: rgba(232,244,255,.7); text-transform: uppercase;
+}
+
+/* Countdown overlay */
+#countdown-overlay {
+  position: absolute; inset: 0; z-index: 22;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(5,10,15,.55); pointer-events: none;
+}
+#countdown-overlay.show { display: flex; }
+#countdown-num {
+  font-size: 140px; font-weight: 800; letter-spacing: -6px;
+  color: #fff; text-shadow: 0 0 60px rgba(124,252,0,.8);
+  animation: countPop .5s cubic-bezier(.22,1,.36,1);
+  font-family: var(--font-disp);
+}
+@keyframes countPop {
+  from { transform: scale(1.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Recording indicator dot (top-left when recording) */
+#rec-indicator {
+  position: absolute; top: 58px; left: 16px; z-index: 21;
+  display: none; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 11px; color: #ff3b5c;
+  pointer-events: none;
+}
+#rec-indicator.show { display: flex; }
+#rec-indicator .ri-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #ff3b5c; animation: pulse 1s infinite;
+}
+
+/* Ready state — "Posicionáte" prompt */
+#ready-prompt {
+  position: absolute; inset: 0; z-index: 18;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  pointer-events: none;
+}
+#ready-prompt.show { display: flex; }
+#ready-prompt .rp-text {
+  font-family: var(--font-mono); font-size: 14px; letter-spacing: 1px;
+  color: rgba(232,244,255,.8); text-align: center;
+  background: rgba(5,10,15,.6); padding: 10px 20px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.1);
+}
 </style>
 </head>
 <body>
@@ -1011,6 +1094,30 @@ html, body {
         <div id="cam-controls" style="pointer-events:auto">
           <button class="cam-btn" onclick="App.flipCamera()" title="Cambiar cámara">🔄</button>
           <button class="cam-btn" onclick="App.goPage('home')" title="Salir">✕</button>
+        </div>
+
+        <!-- Ready prompt (before REC) -->
+        <div id="ready-prompt">
+          <div class="rp-text" id="ready-prompt-text">Posicionáte y tocá REC cuando estés listo</div>
+        </div>
+
+        <!-- REC button -->
+        <div id="rec-btn-wrap">
+          <button id="rec-btn" onclick="App.toggleRec()">
+            <div class="rec-icon"></div>
+          </button>
+          <div id="rec-label">REC</div>
+        </div>
+
+        <!-- Countdown overlay -->
+        <div id="countdown-overlay">
+          <div id="countdown-num">3</div>
+        </div>
+
+        <!-- Recording indicator -->
+        <div id="rec-indicator">
+          <div class="ri-dot"></div>
+          <span>GRABANDO</span>
         </div>
 
         <!-- Camera error overlay -->
@@ -2437,6 +2544,8 @@ const App = {
   _lastFrameTime: performance.now(),
   _pendingResult: null,
   _histFilter: 'all',
+  _recording: false,        // true = analyzing frames
+  _cameraReady: false,      // true = camera stream is live
 
   /* ── Init ── */
   async init(){
@@ -2527,90 +2636,117 @@ const App = {
 
   /* ── Capture ── */
   async startCapture(testType){
-    this._currentTest=testType;
+    this._currentTest = testType;
+    this._recording   = false;
+    this._cameraReady = false;
+    this._analyzer    = null;
+    this._pendingResult = null;
     this.goPage('capture');
 
-    // Hide error screen, show video elements
+    // Reset UI
     $('camera-error').classList.remove('show');
-    $('input-video').style.display='block';
-    $('output-canvas').style.display='block';
-    $('hud').style.display='block';
+    $('input-video').style.display  = 'block';
+    $('output-canvas').style.display= 'block';
+    $('hud').style.display          = 'block';
+    $('result-overlay').classList.remove('show');
+    $('countdown-overlay').classList.remove('show');
+    $('rec-indicator').classList.remove('show');
+    $('ready-prompt').classList.remove('show');
+
+    const recBtn = $('rec-btn');
+    recBtn.classList.remove('recording');
+    $('rec-btn-wrap').style.display = 'flex';
+    $('rec-label').textContent = 'REC';
 
     $('hud-test-name').textContent = {
-      sj:'SQUAT JUMP',cmj:'CMJ',abalakov:'ABALAKOV',dropjump:'DROP JUMP',distance:'SALTO DISTANCIA'
+      sj:'SQUAT JUMP', cmj:'CMJ', abalakov:'ABALAKOV',
+      dropjump:'DROP JUMP', distance:'SALTO DISTANCIA'
     }[testType];
-    $('hud-state').textContent = 'Solicitando cámara…';
-    $('result-overlay').classList.remove('show');
+    $('hud-state').textContent = 'Iniciando cámara…';
+    $('hud-state').style.color = 'var(--muted)';
 
-    // ── Pre-check: HTTPS + permission ────────────────────────────
+    // Check HTTPS + permission
     const check = await PoseEngine.checkPermission();
-    if(!check.ok){
-      this._showCameraError(check.reason, check.message);
-      return;
-    }
+    if(!check.ok){ this._showCameraError(check.reason, check.message); return; }
 
-    const vid=$('input-video'), can=$('output-canvas');
-    const ctx=can.getContext('2d');
-
-    // For distance: run calibration first
-    let pxPerM=null;
+    const vid = $('input-video'), can = $('output-canvas');
+    const ctx = can.getContext('2d');
+    let pxPerM = null;
 
     try {
       await PoseEngine.startCamera(vid, can, async (results)=>{
-        // First frame for distance calibration
-        if(testType==='distance' && pxPerM===null){
-          pxPerM = await CalibUI.start(vid, can, parseFloat(Settings.get('calibLength')));
-          this._analyzer = new DistanceAnalyzer(parseFloat(Settings.get('threshold')), pxPerM);
-          this._analyzer.setCanvas(can.width||vid.videoWidth, can.height||vid.videoHeight);
+
+        // Resize canvas once
+        if(can.width !== vid.videoWidth && vid.videoWidth){
+          can.width = vid.videoWidth; can.height = vid.videoHeight;
+        }
+        const W = can.width, H = can.height;
+        ctx.clearRect(0, 0, W, H);
+
+        const lms = results?.poseLandmarks;
+
+        // Always draw skeleton (preview mode too)
+        if(lms) Draw.skeleton(ctx, lms, W, H);
+
+        // FPS
+        const now = performance.now();
+        this._fps = lerp(this._fps, 1000/(now - this._lastFrameTime), 0.1);
+        this._lastFrameTime = now;
+
+        // ── PREVIEW MODE (camera on, waiting for REC) ──────────────
+        if(!this._recording){
+          if(!this._cameraReady){
+            this._cameraReady = true;
+            // Show ready prompt and REC button
+            $('hud-state').textContent = 'Cámara lista';
+            $('hud-state').style.color = '#7CFC00';
+            $('ready-prompt').classList.add('show');
+            $('ready-prompt-text').textContent =
+              'Posicionáte y tocá ● REC cuando estés listo';
+          }
+          return; // don't tick analyzer yet
         }
 
-        if(!this._analyzer && testType!=='distance'){
-          const t=parseFloat(Settings.get('threshold'));
-          if(testType==='sj') this._analyzer=new SJAnalyzer(t);
-          else if(testType==='cmj') this._analyzer=new CMJAnalyzer(t);
-          else if(testType==='abalakov') this._analyzer=new AbalakovAnalyzer(t);
-          else if(testType==='dropjump') this._analyzer=new DropJumpAnalyzer(t);
-        }
+        // ── RECORDING MODE ─────────────────────────────────────────
 
+        // Init analyzer on first recording frame
+        if(!this._analyzer){
+          if(testType === 'distance' && pxPerM === null){
+            pxPerM = await CalibUI.start(vid, can, parseFloat(Settings.get('calibLength')));
+            this._analyzer = new DistanceAnalyzer(parseFloat(Settings.get('threshold')), pxPerM);
+            this._analyzer.setCanvas(W, H);
+          } else if(testType !== 'distance'){
+            const t = parseFloat(Settings.get('threshold'));
+            if     (testType==='sj')       this._analyzer = new SJAnalyzer(t);
+            else if(testType==='cmj')      this._analyzer = new CMJAnalyzer(t);
+            else if(testType==='abalakov') this._analyzer = new AbalakovAnalyzer(t);
+            else if(testType==='dropjump') this._analyzer = new DropJumpAnalyzer(t);
+          }
+        }
         if(!this._analyzer) return;
-
-        // Compute FPS
-        const now=performance.now();
-        this._fps=lerp(this._fps, 1000/(now-this._lastFrameTime), 0.1);
-        this._lastFrameTime=now;
-
-        // Resize canvas
-        if(can.width!==vid.videoWidth && vid.videoWidth) { can.width=vid.videoWidth; can.height=vid.videoHeight; }
-        const W=can.width, H=can.height;
-        ctx.clearRect(0,0,W,H);
-
-        const lms=results?.poseLandmarks;
-
-        // Draw skeleton
-        if(lms) Draw.skeleton(ctx,lms,W,H);
 
         // Test-specific overlays
         if(lms && testType==='sj'){
-          Draw.kneeAngle(ctx,lms,W,H);
-          if(this._analyzer.baseline) Draw.baseline(ctx,this._analyzer.baseline,W,H);
+          Draw.kneeAngle(ctx, lms, W, H);
+          if(this._analyzer.baseline) Draw.baseline(ctx, this._analyzer.baseline, W, H);
         }
         if(lms && testType==='cmj' && this._analyzer.baseline){
-          Draw.baseline(ctx,this._analyzer.baseline,W,H,'rgba(0,255,136,0.5)','tobillo');
-          if(this._analyzer._hipBase) Draw.baseline(ctx,this._analyzer._hipBase,W,H,'rgba(220,80,220,0.5)','cadera');
+          Draw.baseline(ctx, this._analyzer.baseline, W, H, 'rgba(0,255,136,0.5)', 'tobillo');
+          if(this._analyzer._hipBase) Draw.baseline(ctx, this._analyzer._hipBase, W, H, 'rgba(220,80,220,0.5)', 'cadera');
         }
         if(lms && testType==='abalakov'){
-          if(this._analyzer.baseline) Draw.baseline(ctx,this._analyzer.baseline,W,H);
-          Draw.wristTrail(ctx,lms,W,H);
+          if(this._analyzer.baseline) Draw.baseline(ctx, this._analyzer.baseline, W, H);
+          Draw.wristTrail(ctx, lms, W, H);
         }
         if(lms && testType==='dropjump'){
-          if(this._analyzer._floorBase) Draw.baseline(ctx,this._analyzer._floorBase,W,H,'rgba(0,255,136,0.5)','suelo');
-          if(this._analyzer._boxBase) Draw.baseline(ctx,this._analyzer._boxBase,W,H,'rgba(50,120,255,0.5)','caja');
+          if(this._analyzer._floorBase) Draw.baseline(ctx, this._analyzer._floorBase, W, H, 'rgba(0,255,136,0.5)', 'suelo');
+          if(this._analyzer._boxBase)   Draw.baseline(ctx, this._analyzer._boxBase,   W, H, 'rgba(50,120,255,0.5)', 'caja');
         }
         if(lms && testType==='distance'){
-          if(this._analyzer.baseline) Draw.baseline(ctx,this._analyzer.baseline,W,H);
+          if(this._analyzer.baseline) Draw.baseline(ctx, this._analyzer.baseline, W, H);
           if(this._analyzer._takeoffX && this._analyzer._lastX && this._analyzer.state==='DONE'){
-            const y=this._analyzer.baseline?this._analyzer.baseline*H:H*0.8;
-            Draw.distanceLine(ctx,this._analyzer._takeoffX,this._analyzer._lastX,y,W,H);
+            const y = this._analyzer.baseline ? this._analyzer.baseline*H : H*0.8;
+            Draw.distanceLine(ctx, this._analyzer._takeoffX, this._analyzer._lastX, y, W, H);
           }
         }
 
@@ -2618,30 +2754,85 @@ const App = {
         if(lms) this._analyzer.tick(lms, this._fps);
 
         // Update HUD
-        const hud=this._analyzer?.getHUD()||{state:'—',color:'white',progress:0,metrics:[]};
-        $('hud-state').textContent=hud.state;
-        $('hud-state').style.color=hud.color;
-        $('hud-progress-fill').style.width=(hud.progress*100)+'%';
-        $('hud-metrics').innerHTML=hud.metrics.map(m=>`
+        const hud = this._analyzer?.getHUD() || {state:'—', color:'white', progress:0, metrics:[]};
+        $('hud-state').textContent = hud.state;
+        $('hud-state').style.color = hud.color;
+        $('hud-progress-fill').style.width = (hud.progress*100)+'%';
+        $('hud-metrics').innerHTML = hud.metrics.map(m=>`
           <div class="hud-metric">
             <div class="m-label">${m.label}</div>
             <div class="m-value">${m.value}<span class="m-unit"> ${m.unit}</span></div>
           </div>`).join('');
 
-        // Check for result
+        // ── AUTO-STOP: result detected → stop recording, show result ──
         if(this._analyzer?.result && this._analyzer.state==='DONE' && !this._pendingResult){
-          this._pendingResult=this._analyzer.result;
+          this._pendingResult = this._analyzer.result;
+          this._stopRecording();       // stop REC indicator
           this._showResult(this._pendingResult);
         }
       });
-    } catch(e) {
+
+    } catch(e){
       this._showCameraError(
-        e.name === 'NotAllowedError'  ? 'denied'      :
-        e.name === 'NotFoundError'    ? 'notfound'    :
-        location.protocol !== 'https:' ? 'https'      : 'unknown',
+        e.name==='NotAllowedError'  ? 'denied'   :
+        e.name==='NotFoundError'    ? 'notfound' :
+        location.protocol!=='https:'? 'https'    : 'unknown',
         e.message
       );
     }
+  },
+
+  /* ── REC button toggle ── */
+  async toggleRec(){
+    if(this._recording){
+      // Manual stop (cancel)
+      this._stopRecording();
+      this._analyzer = null;
+      $('hud-state').textContent = 'Cancelado';
+      $('ready-prompt-text').textContent = 'Posicionáte y tocá ● REC cuando estés listo';
+      $('ready-prompt').classList.add('show');
+      return;
+    }
+    if(!this._cameraReady) return;
+    await this._startRecording();
+  },
+
+  async _startRecording(){
+    $('ready-prompt').classList.remove('show');
+
+    // 3-second countdown
+    const overlay  = $('countdown-overlay');
+    const numEl    = $('countdown-num');
+    overlay.classList.add('show');
+
+    for(let i = 3; i >= 1; i--){
+      numEl.textContent = i;
+      numEl.style.animation = 'none';
+      numEl.offsetHeight;  // reflow to restart animation
+      numEl.style.animation = '';
+      await new Promise(r => setTimeout(r, 900));
+    }
+    numEl.textContent = '¡YA!';
+    numEl.style.color = '#7CFC00';
+    await new Promise(r => setTimeout(r, 500));
+    overlay.classList.remove('show');
+    numEl.style.color = '#fff';
+
+    // Start
+    this._recording = true;
+    this._analyzer  = null;  // fresh analyzer
+    $('rec-btn').classList.add('recording');
+    $('rec-label').textContent = '■ STOP';
+    $('rec-indicator').classList.add('show');
+    $('hud-state').textContent = 'Analizando…';
+    $('hud-state').style.color = '#7CFC00';
+  },
+
+  _stopRecording(){
+    this._recording = false;
+    $('rec-btn').classList.remove('recording');
+    $('rec-label').textContent = 'REC';
+    $('rec-indicator').classList.remove('show');
   },
 
   _showCameraError(reason, message=''){
@@ -2683,22 +2874,36 @@ const App = {
   },
 
   _stopCapture(){
+    this._stopRecording();
     PoseEngine.stopCamera();
     this._analyzer=null;
     this._pendingResult=null;
+    this._cameraReady=false;
+    this._recording=false;
     $('result-overlay').classList.remove('show');
     $('calib-overlay').classList.remove('show');
+    $('ready-prompt').classList.remove('show');
+    $('countdown-overlay').classList.remove('show');
+    $('rec-indicator').classList.remove('show');
   },
 
   resetCapture(){
+    this._stopRecording();
     this._analyzer=null;
     this._pendingResult=null;
     $('result-overlay').classList.remove('show');
-    this.startCapture(this._currentTest);
+    $('ready-prompt').classList.add('show');
+    $('ready-prompt-text').textContent = 'Posicionáte y tocá ● REC cuando estés listo';
+    $('hud-state').textContent = 'Cámara lista';
+    $('hud-state').style.color = '#7CFC00';
+    $('hud-metrics').innerHTML = '';
+    $('hud-progress-fill').style.width = '0%';
   },
 
   /* ── Result display ── */
   _showResult(r){
+    $('rec-btn-wrap').style.display = 'none';  // hide REC button
+    $('ready-prompt').classList.remove('show');
     const colors={sj:'var(--cyan)',cmj:'var(--cyan2)',abalakov:'var(--yellow)',dropjump:'var(--orange)',distance:'var(--red)'};
     $('res-test-name').textContent={sj:'SQUAT JUMP',cmj:'CMJ',abalakov:'ABALAKOV',dropjump:'DROP JUMP',distance:'DISTANCIA'}[r.test]||r.test.toUpperCase();
     $('res-main-value').textContent=r.mainValue;
